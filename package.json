@@ -1,0 +1,56 @@
+{
+  "name": "vuejs-chat",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "<p align=\"center\"><a href=\"https://laravel.com\" target=\"_blank\"><img src=\"https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg\" width=\"400\" alt=\"Laravel Logo\"></a></p>",
+  "main": "postcss.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Stakvino/vuejs-chat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Stakvino/vuejs-chat/issues"
+  },
+  "homepage": "https://github.com/Stakvino/vuejs-chat#readme",
+  "dependencies": {
+    "@primevue/forms": "^4.2.5",
+    "@primevue/themes": "^4.0.0",
+    "axios": "^1.7.9",
+    "chart.js": "3.3.2",
+    "primeicons": "^6.0.1",
+    "primevue": "^4.0.0",
+    "vue": "^3.4.34",
+    "vue-router": "^4.4.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@primevue/auto-import-resolver": "^4.0.1",
+    "@rushstack/eslint-patch": "^1.8.0",
+    "@vitejs/plugin-vue": "^5.0.5",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.23.0",
+    "laravel-vite-plugin": "^1.1.1",
+    "postcss": "^8.4.40",
+    "prettier": "^3.2.5",
+    "sass": "^1.55.0",
+    "tailwindcss": "^3.4.6",
+    "tailwindcss-primeui": "^0.3.2",
+    "unplugin-vue-components": "^0.27.3",
+    "vite": "^5.3.1"
+  }
+}
