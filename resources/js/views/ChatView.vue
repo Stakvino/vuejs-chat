@@ -1,9 +1,11 @@
 <script setup>
     import { AutoComplete, Toast, Badge, Menu, Button, IconField, InputIcon, InputText } from 'primevue';
     import { ref, onMounted, useTemplateRef } from 'vue';
-    import { throttle } from '../utils/helpers';
-    import ChatMessage from '../components/ChatMessage/ChatMessage.vue';
+    import { throttle } from '@/utils/helpers';
+    import ChatMessage from '@/components/ChatMessage/ChatMessage.vue';
+    import { useAppStore } from '@/stores/useApp'
 
+    const { setContentIsReady } = useAppStore();
     const selectedCountry = ref();
     const filteredCountries = ref();
     const searchInputShow = ref(false);
@@ -17,6 +19,7 @@
         const maxScroll = target.scrollHeight - target.clientHeight;
         target.scrollTo(0, maxScroll);
         target.classList.add("scroll-smooth")
+        setContentIsReady(true);
     })
 
     const userChatSearch = (event) => {
@@ -192,3 +195,54 @@
        </div>
     </div>
 </template>
+
+
+<style>
+/* Chat page */
+.chat-container {
+    height: calc(100vh - 130px);
+}
+.chat-users-list {
+    width: 350px;
+    max-height: 100%;
+}
+.chat-search .p-inputtext {
+    padding: 6px 10px;
+    width: 100%;
+}
+.chat-messages-container {
+    flex: 1;
+}
+
+.my-message-container,
+.others-message-container {
+    border-radius: 10px;
+    padding: 10px;
+    border: rgba(200, 200, 200, .5) solid 1px;
+    margin-bottom: 15px;
+    display: inline;
+    max-width: 80%;
+}
+.my-message-container {
+    margin-left: auto;
+    background-color: rgba(0, 200, 0, .1);
+}
+.others-message-container {
+    background-color: rgba(150, 150, 150, .1);
+}
+.message-info {
+    color: rgba(100, 100, 100, .5);
+}
+.message-info.seen {
+    color: rgba(0, 200, 0, 1);
+}
+.sending-message-input .pi-send {
+    color: #a881af;
+    font-weight: bold;
+}
+.chat-scrolldown-button {
+    left: 100%;
+    bottom: 5px;
+}
+
+</style>

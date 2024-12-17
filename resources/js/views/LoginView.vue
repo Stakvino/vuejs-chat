@@ -1,10 +1,18 @@
 <script setup>
     import { Card, Button, InputText, Toast, Message, Checkbox, Password, FloatLabel } from 'primevue';
-    import { ref } from 'vue';
+    import { ref, onMounted } from 'vue';
     import { Form } from '@primevue/forms';
     import { zodResolver } from '@primevue/forms/resolvers/zod';
     import { useToast } from "primevue/usetoast";
     import { z } from 'zod';
+    import { useAppStore } from '@/stores/useApp'
+    import { primeVueFormStatesToData } from '@/utils/helpers';
+    import axios from 'axios';
+    import router from '@/router';
+
+    const { setContentIsReady } = useAppStore();
+
+    onMounted(() => setContentIsReady(true))
 
     const toast = useToast();
     const initialValues = ref({
@@ -21,9 +29,29 @@
         })
     ));
 
-    const onFormSubmit = ({ valid }) => {
+    const serverErrors = ref({});
+    const onFormSubmit = ({ valid, states }) => {
         if (valid) {
-            toast.add({ severity: 'success', summary: 'Form is submitted.', life: 3000 });
+            axios.post('/login', primeVueFormStatesToData(states))
+            .then(response => {
+                const responseData = response['data'];
+                if ( responseData['success'] && responseData['redirect'] ) {
+                    toast.add({ severity: 'success', summary: 'Login in...', life: 3000 });
+                    router.push({ path: responseData['redirect'] })
+                }
+                else if ( responseData['validation_error'] && responseData['error_messages'] ) {
+                    for (const fieldName in responseData['error_messages']) {
+                        if (Object.prototype.hasOwnProperty.call(responseData['error_messages'], fieldName)) {
+                            const errorMessage = responseData['error_messages'][fieldName];
+                            serverErrors.value[fieldName] = errorMessage;
+                        }
+                    }
+                }
+                else {
+                    toast.add({ severity: 'error', summary: 'Response error from server.', life: 3000 });
+                }
+            })
+            .catch(e => console.log('catch error response', e))
         }
     };
 </script>
@@ -53,6 +81,7 @@
                                     <label for="email_label">Email</label>
                                 </FloatLabel>
                                 <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">{{ $form.email.error?.message }}</Message>
+                                <Message v-if="serverErrors.email" severity="error" size="small" variant="simple">{{ serverErrors.email }}</Message>
                             </div>
                             <div class="flex flex-col">
                                 <FloatLabel>
@@ -62,6 +91,7 @@
                                 <template v-if="$form.password?.invalid">
                                     <Message v-for="(error, index) of $form.password.errors" :key="index" severity="error" size="small" variant="simple">{{ error.message }}</Message>
                                 </template>
+                                <Message v-if="serverErrors.password" severity="error" size="small" variant="simple">{{ serverErrors.password }}</Message>
                             </div>
                             <div class="flex justify-between">
                                 <div class="flex items-center gap-2">

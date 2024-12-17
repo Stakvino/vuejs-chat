@@ -1,12 +1,13 @@
 import 'primeicons/primeicons.css'
 
 import { createApp } from 'vue';
-import app from './components/app.vue';
+import app from '@/components/app.vue';
 import PrimeVue from 'primevue/config';
 import { definePreset } from '@primevue/themes';
 import Aara from '@primevue/themes/aura';
-import router from './router';
+import router from '@/router';
 import ToastService from 'primevue/toastservice';
+import { createPinia } from 'pinia';
 
 const MyPreset = definePreset(Aara, {
     semantic: {
@@ -22,7 +23,11 @@ const MyPreset = definePreset(Aara, {
     }
 });
 
-createApp(app).use(
+const pinia = createPinia();
+
+createApp(app)
+
+.use(
     PrimeVue, {
         theme: {
             preset: MyPreset,
@@ -34,4 +39,8 @@ createApp(app).use(
             }
         }
     }
-).use(router).use(ToastService).mount('#app')
+)
+.use(pinia)
+.use(router)
+.use(ToastService)
+.mount('#app')

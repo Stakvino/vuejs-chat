@@ -1,15 +1,13 @@
 <script setup>
-import Button from "primevue/button";
-import NavBar from "../views/layout/NavBar.vue";
-import Select from 'primevue/select';
-import { ref } from "vue";
+import LoadingLayout from "@/views/layout/LoadingLayout.vue";
+import NavBar from "@/views/layout/NavBar.vue";
 import { RouterView } from "vue-router";
-
 </script>
 
 <template>
     <div>
+        <LoadingLayout />
         <NavBar />
-        <RouterView></RouterView>
+        <RouterView ></RouterView>
     </div>
 </template>

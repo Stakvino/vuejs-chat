@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Validator;
 
 class RegisteredUserController extends Controller
 {
@@ -20,11 +21,18 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        if ( $validator->fails() ) {
+            return response()->json([
+                'validation_error' => true,
+                'error_messages' => $validator->errors()
+           ]);
+        }
 
         $user = User::create([
             'name' => $request->name,

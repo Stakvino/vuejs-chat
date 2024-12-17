@@ -1,6 +1,16 @@
 <script setup>
     import { RouterLink } from 'vue-router';
     import { Button } from 'primevue';
+    import { useAppStore } from '@/stores/useApp'
+    import { onMounted } from 'vue';
+    import { useAuthStore } from '@/stores/useAuth';
+    import { storeToRefs } from 'pinia';
+
+    const { setContentIsReady } = useAppStore();
+    const authStore = useAuthStore();
+    const { isAuth } = storeToRefs(authStore);
+
+    onMounted(() => setContentIsReady(true))
 </script>
 
 <template>
@@ -10,7 +20,12 @@
                 <h1 class="my-3 sm:my-5 text-2xl sm:text-5xl font-light">Vuejs Chat</h1>
                 <h2 class="mb-3 sm:my-5 text-2xl sm:text-5xl font-bold">A Chat app made with Laravel and Vuejs</h2>
                 <p class="mb-7 sm:my-5 text-lg md:text-2xl font-light">In order to use this application you will have to register an account using your own personal email.</p>
-                <div>
+                <div v-if="isAuth">
+                    <RouterLink to="/chat">
+                        <Button severity="primary" class="action-button mr-3 !py-1 !px-3 sm:!py-2 sm:!px-5" raised>Go to chat</Button>
+                    </RouterLink>
+                </div>
+                <div v-else>
                     <RouterLink to="/register">
                         <Button severity="secondary" class="mr-3 !py-1 !px-3 sm:!py-2 sm:!px-5" raised>Get Started</Button>
                     </RouterLink>
@@ -74,3 +89,15 @@
         </div>
     </div>
 </template>
+
+<style>
+#hero {
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, rgb(238, 239, 175) 0%, rgb(195, 227, 250) 100%);
+    clip-path: ellipse(150% 87% at 93% 13%);
+}
+.tools-section .item {
+    height:180px;
+    padding:2px;
+    border-radius:10px;
+}
+</style>

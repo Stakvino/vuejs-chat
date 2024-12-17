@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Auth;
 
-use Illuminate\Auth\Events\Lockout;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Auth\Events\Lockout;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class LoginRequest extends FormRequest
 {
@@ -37,7 +40,7 @@ class LoginRequest extends FormRequest
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): JsonResponse
     {
         $this->ensureIsNotRateLimited();
 
@@ -82,4 +85,5 @@ class LoginRequest extends FormRequest
     {
         return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
     }
+
 }

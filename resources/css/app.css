@@ -23,6 +23,10 @@ body{
 }
 
 /* Primevue style changes */
+.p-tieredmenu-separator {
+    height: 1px;
+    background-color: #a881af;
+}
 .action-button.p-button:not(.p-button-link) {
     border-radius: 8rem;
     background-color: #a881af;
@@ -62,74 +66,4 @@ a.p-button {
 }
 .p-autocomplete.w-full input {
     width: 100%;
-}
-
-/* Navbar */
-.navbar .p-menubar-item-label,
-.navbar .p-menubar-item-icon {
-    font-weight: bold;
-}
-
-/*Home Page */
-#hero {
-    background: linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, rgb(238, 239, 175) 0%, rgb(195, 227, 250) 100%);
-    clip-path: ellipse(150% 87% at 93% 13%);
-}
-.tools-section .item {
-    height:180px;
-    padding:2px;
-    border-radius:10px;
-}
-
-/* Register and Login Pages */
-
-/* Chat page */
-.chat-container {
-    height: calc(100vh - 130px);
-}
-.chat-users-list {
-    width: 350px;
-    max-height: 100%;
-}
-/*.chat-users-list > .card {
-    overflow-y: scroll;
-    overflow-x: hidden;
-}*/
-.chat-search .p-inputtext {
-    padding: 6px 10px;
-    width: 100%;
-}
-.chat-messages-container {
-    flex: 1;
-}
-
-.my-message-container,
-.others-message-container {
-    border-radius: 10px;
-    padding: 10px;
-    border: rgba(200, 200, 200, .5) solid 1px;
-    margin-bottom: 15px;
-    display: inline;
-    max-width: 80%;
-}
-.my-message-container {
-    margin-left: auto;
-    background-color: rgba(0, 200, 0, .1);
-}
-.others-message-container {
-    background-color: rgba(150, 150, 150, .1);
-}
-.message-info {
-    color: rgba(100, 100, 100, .5);
-}
-.message-info.seen {
-    color: rgba(0, 200, 0, 1);
-}
-.sending-message-input .pi-send {
-    color: #a881af;
-    font-weight: bold;
-}
-.chat-scrolldown-button {
-    left: 100%;
-    bottom: 5px;
 }

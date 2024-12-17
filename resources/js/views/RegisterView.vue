@@ -5,19 +5,26 @@
     import { zodResolver } from '@primevue/forms/resolvers/zod';
     import { useToast } from "primevue/usetoast";
     import { z } from 'zod';
-    import { primeVueFormStatesToData } from '../utils/helpers';
+    import { primeVueFormStatesToData } from '@/utils/helpers';
     import axios from 'axios';
-    import router from '../router';
+    import router from '@/router';
+    import { useAppStore } from '@/stores/useApp'
+    import { onMounted } from 'vue';
+
+    const { setContentIsReady } = useAppStore();
+
+    onMounted(() => setContentIsReady(true))
 
     const toast = useToast();
     const initialValues = ref({
-        name: '',
-        email: '',
-        password: '',
+        name: 'Ouss Dgun',
+        email: 'ousdgun@gmail.com',
+        password: 'password',
+        password_confirmation: 'password',
         remember: false
     });
 
-    const resolver = ref(zodResolver(
+    const formResolver = ref(zodResolver(
         z.object({
             name: z.string().min(1, { message: 'Name is required.' }),
             email: z.string().min(1, { message: 'Email is required.' }).email({ message: 'Invalid email address.' }),
@@ -26,14 +33,30 @@
         })
     ));
 
+    const serverErrors = ref({});
+
     const onFormSubmit = ({ valid, states }) => {
         if (valid) {
-            axios.post('/register', primeVueFormStatesToData(states)).then(response => {
-                if ( response['success'] && response['redirect'] ) {
-                    toast.add({ severity: 'success', summary: 'Form is submitted.', life: 3000 });
-                    router.push({ path: response['redirect'] })
+            axios.post('/register', primeVueFormStatesToData(states))
+            .then(response => {
+                const responseData = response['data'];
+                if ( responseData['success'] && responseData['redirect'] ) {
+                    toast.add({ severity: 'success', summary: 'Registering...', life: 3000 });
+                    router.push({ path: responseData['redirect'] })
+                }
+                else if ( responseData['validation_error'] && responseData['error_messages'] ) {
+                    for (const fieldName in responseData['error_messages']) {
+                        if (Object.prototype.hasOwnProperty.call(responseData['error_messages'], fieldName)) {
+                            const errorMessages = responseData['error_messages'][fieldName];
+                            serverErrors.value[fieldName] = errorMessages.join(' | ');
+                        }
+                    }
+                }
+                else {
+                    toast.add({ severity: 'error', summary: 'Response error from server.', life: 3000 });
                 }
             })
+            .catch(e => console.log('catch error response', e))
         }
     };
 </script>
@@ -56,13 +79,14 @@
                 <template #content>
                     <div class="login-form">
                         <Toast />
-                        <Form v-slot="$form" :resolver="resolver" :initialValues="initialValues" @submit="onFormSubmit" class="flex justify-center flex-col gap-4" >
+                        <Form v-slot="$form" :resolver="formResolver" :initialValues="initialValues" @submit="onFormSubmit" class="flex justify-center flex-col gap-4" >
                             <div class="flex flex-col mb-2">
                                 <FloatLabel>
                                     <InputText name="name" type="text" inputId="name_label" class="w-full"  />
                                     <label for="name_label">Name</label>
                                 </FloatLabel>
                                 <Message v-if="$form.name?.invalid" severity="error" size="small" variant="simple">{{ $form.name.error?.message }}</Message>
+                                <Message v-if="serverErrors.name" severity="error" size="small" variant="simple">{{ serverErrors.name }}</Message>
                             </div>
                             <div class="flex flex-col mb-2">
                                 <FloatLabel>
@@ -70,6 +94,7 @@
                                     <label for="email_label">Email</label>
                                 </FloatLabel>
                                 <Message v-if="$form.email?.invalid" severity="error" size="small" variant="simple">{{ $form.email.error?.message }}</Message>
+                                <Message v-if="serverErrors.email" severity="error" size="small" variant="simple">{{ serverErrors.email }}</Message>
                             </div>
                             <div class="flex flex-col">
                                 <FloatLabel>
@@ -79,6 +104,7 @@
                                 <template v-if="$form.password?.invalid">
                                     <Message v-for="(error, index) of $form.password.errors" :key="index" severity="error" size="small" variant="simple">{{ error.message }}</Message>
                                 </template>
+                                <Message v-if="serverErrors.password" severity="error" size="small" variant="simple">{{ serverErrors.password }}</Message>
                             </div>
                             <div class="flex flex-col">
                                 <FloatLabel>
@@ -88,6 +114,7 @@
                                 <template v-if="$form.password_confirmation?.invalid">
                                     <Message v-for="(error, index) of $form.password_confirmation.errors" :key="index" severity="error" size="small" variant="simple">{{ error.message }}</Message>
                                 </template>
+                                <Message v-if="serverErrors.password_confirmation" severity="error" size="small" variant="simple">{{ serverErrors.password_confirmation }}</Message>
                             </div>
                             <div class="flex justify-end mt-5">
                                 <Button type="submit" severity="secondary" raised class="!py-1 !px-3 sm:!py-2 sm:!px-5 !rounded-md">Register</Button>
