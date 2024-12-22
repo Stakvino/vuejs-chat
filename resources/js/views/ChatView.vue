@@ -141,10 +141,10 @@
                             </AutoComplete>
                         </div>
                         <div class="ml-auto" v-if="searchInputShow" @click="searchInputShow = false">
-                            <Button icon="pi pi-times" aria-label="Close search" />
+                            <Button style="color: black;" icon="pi pi-times" aria-label="Close search" />
                         </div>
                         <div class="ml-auto" v-if="!searchInputShow" @click="searchInputShow = true">
-                            <Button icon="pi pi-search" aria-label="Search in chat" />
+                            <Button style="color: black;" icon="pi pi-search" aria-label="Search in chat" />
                         </div>
                         <div class="">
                             <Button class="three-dots-btn" type="button" icon="pi pi-ellipsis-v" @click="toggleUserOptionsMenu" size="large" aria-haspopup="true" aria-controls="user_options_menu" />

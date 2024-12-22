@@ -3,9 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
@@ -19,8 +20,11 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
+        'avatar',
         'email',
         'password',
+        'personal_color'
     ];
 
     /**
@@ -32,6 +36,10 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+     /** Const values */
+     const AVATAR_FOLDER_PATH = "/images/avatars/";
+     const DEFAULT_AVATAR_PATH = "/images/avatars/default.png";
 
     /**
      * Get the attributes that should be cast.
@@ -45,4 +53,34 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the path of user's avatar image .
+     *
+     * @return string
+     */
+    public function avatarPath(): string
+    {
+        $avatarPath = User::AVATAR_FOLDER_PATH . $this->avatar;
+        if ( $this->avatar && Storage::disk('public')->exists($avatarPath) ) {
+            return $avatarPath;
+        }
+
+        return User::DEFAULT_AVATAR_PATH;
+    }
+
+    /**
+     *  Delete the current avatar image file of user
+     *
+     * @return void
+     */
+    public function deleteAvatar(): void
+    {
+        $avatarPath = User::AVATAR_FOLDER_PATH . $this->avatar;
+        if ( $this->avatar && $avatarPath != User::DEFAULT_AVATAR_PATH ) {
+            Storage::disk('public')->delete($avatarPath);
+            $this->update(["avatar" => null]);
+        }
+    }
+
 }

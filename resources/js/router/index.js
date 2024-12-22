@@ -44,18 +44,22 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from) => {
-    const { setIsAuth } = useAuthStore()
+    const { setIsAuth, fetchAuthUser } = useAuthStore()
     let isAuth = false;
+
+    const { setCurrentRouteName } = useAppStore();
+    setCurrentRouteName(to.name || null);
 
     await axios.get('/api/auth-check')
     .then(response => {
-        isAuth = !!response.data
-        setIsAuth(isAuth);
+        isAuth = !!response.data;
+        setIsAuth(isAuth || null);
     })
     .catch(e => console.log('catch error response', e))
 
-    const { setCurrentRouteName } = useAppStore();
-    setCurrentRouteName(to.name);
+    if (isAuth) {
+        await fetchAuthUser();
+    }
 
     const middleware = to.meta.middleware;
     if ( !isAuth && middleware === 'auth' ) {

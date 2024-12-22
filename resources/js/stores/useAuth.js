@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import axios from 'axios';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -6,7 +7,7 @@ export const useAuthStore = defineStore('auth', {
         authUser: null
     }),
     getters: {
-      getAuthUser: () => isAuth ? authUser : null,
+
     },
     actions: {
       setIsAuth(isAuth) {
@@ -14,6 +15,23 @@ export const useAuthStore = defineStore('auth', {
       },
       setAuthUser(authUser) {
         this.authUser = authUser;
-      }
+      },
+      fetchAuthUser(successCallback) {
+        axios.get('/api/auth-user')
+            .then(response => {
+                const responseData = response['data'];
+                if ( responseData['success'] && responseData['user'] ) {
+                    const authUser = responseData['user'];
+                    this.authUser = authUser;
+                    if (successCallback) {
+                        successCallback(authUser);
+                    }
+                }
+                else {
+                    // error message
+                }
+            })
+            .catch(e => console.log('catch error response', e))
+      },
     },
   })

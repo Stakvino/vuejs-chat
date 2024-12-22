@@ -1,18 +1,20 @@
 <script setup>
 import { Menubar, Button, Avatar, TieredMenu } from 'primevue';
-import { ref, onMounted, watchEffect } from "vue";
+import EditProfile from '@/views/modals/EditProfile.vue';
+import { ref, onMounted, watchEffect, computed } from "vue";
 import { RouterLink, useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/useApp';
 import { useAuthStore } from '@/stores/useAuth';
+import { useModalStore } from '@/stores/useModal';
 import { storeToRefs } from 'pinia';
 import axios from 'axios';
 
 const { setNavIsReady } = useAppStore();
-const { setIsAuth, setAuthUser } = useAuthStore();
+const { setIsAuth, setAuthUser, fetchAuthUser } = useAuthStore();
 const authStore = useAuthStore();
-const { isAuth } = storeToRefs(authStore);
+const { isAuth, authUser } = storeToRefs(authStore);
 
-onMounted(() => { setNavIsReady(true); });
+onMounted(() => setNavIsReady(true));
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -44,20 +46,22 @@ const NavMenuItems = ref([
 ]);
 
 watchEffect(() => {
-    console.log(currentRouteName.value);
     NavMenuItems.value.forEach(NavMenuItem => {
         NavMenuItem.class = currentRouteName.value === NavMenuItem.meta.name ? 'active' : null
     })
 
 })
 
+const { setEditProfileModal } = useModalStore();
 const profileMenu = ref();
 const profileItems = ref([
     {
         label: 'My Profile',
         icon: 'pi pi-user text-purple-500',
         command: () => {
-            router.push('/');
+            fetchAuthUser(() => {
+                setEditProfileModal(true);
+            });
         }
     },
     {
@@ -67,7 +71,7 @@ const profileItems = ref([
         label: 'Logout',
         icon: 'pi pi-sign-out text-red-500',
         command: () => {
-            axios.post('/logout', {})
+            axios.post('/logout')
             .then(response => {
                 const responseData = response['data'];
                 if ( responseData['success'] && responseData['redirect'] ) {
@@ -86,6 +90,8 @@ const profileItems = ref([
 const toggleProfileMenu = (event) => {
     profileMenu.value.toggle(event);
 };
+
+
 </script>
 
 
@@ -102,9 +108,18 @@ const toggleProfileMenu = (event) => {
                     </RouterLink>
                 </template>
                 <template #end>
-                    <div v-if="isAuth">
-                        <Avatar size="large" class="cursor-pointer" @click="toggleProfileMenu" aria-controls="profile_menu" image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" alt="user profile pic" shape="circle" />
+                    <div v-if="isAuth && authUser">
+                        <Avatar
+                            size="large"
+                            class="user-avatar cursor-pointer bg-cover bg-center bg-no-repeat"
+                            @click="toggleProfileMenu"
+                            aria-controls="profile_menu"
+                            alt="user profile pic"
+                            shape="circle"
+                            :style="{backgroundColor: authUser['personal_color'], backgroundImage: `url(${authUser['avatar_path']})`, border: 'rgb(150,150,150) solid 1px'}"
+                        />
                         <TieredMenu ref="profileMenu" id="profile_menu" :model="profileItems" popup />
+                        <EditProfile />
                     </div>
                     <div class="py-2" v-else>
                         <RouterLink to="/register">

@@ -64,6 +64,16 @@ a.p-button {
     color: black;
     width: 20px;
 }
+.p-button.error-button {
+    background-color: #ff0033;
+    color: white;
+}
 .p-autocomplete.w-full input {
     width: 100%;
+}
+
+/* User Profile */
+.user-avatar img {
+    border-radius: 0;
+    max-width: 60%;
 }
