@@ -12,3 +12,4 @@ Route::get('/auth-check', function(){ return auth()->check(); })->name('auth.che
 Route::get('/auth-user', [UserController::class, 'getAuthUser'])->name('auth.user');
 
 Route::put('/user/profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
+

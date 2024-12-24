@@ -8,6 +8,7 @@ import { useAppStore } from '@/stores/useApp';
 import { storeToRefs } from 'pinia';
 import axios from 'axios'
 
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

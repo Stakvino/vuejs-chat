@@ -23,13 +23,9 @@ const updateData = ref({
     avatar: null,
 });
 
-// Change values in UI when they are changed in server
-/*watch(authUser, () => {
-    updateData.value.name = authUser.value.name;
-})*/
-
 onMounted(() => {
     updateData.value.name = authUser.value.name;
+    updateData.value.avatar = authUser.value.avatar;
 })
 
 const avatarPath = ref(authUser.value['avatar_path']);
