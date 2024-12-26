@@ -5,12 +5,15 @@
     import { zodResolver } from '@primevue/forms/resolvers/zod';
     import { useToast } from "primevue/usetoast";
     import { z } from 'zod';
-    import { useAppStore } from '@/stores/useApp'
+    import { useAppStore } from '@/stores/useApp';
     import { primeVueFormStatesToData } from '@/utils/helpers';
     import axios from 'axios';
     import router from '@/router';
 
     const { setContentIsReady } = useAppStore();
+
+    const urlQuery = router.currentRoute.value.query;
+    const successMessage = urlQuery['success-message'] || false;
 
     onMounted(() => setContentIsReady(true))
 
@@ -37,7 +40,7 @@
                 const responseData = response['data'];
                 if ( responseData['success'] && responseData['redirect'] ) {
                     toast.add({ severity: 'success', summary: 'Login in...', life: 3000 });
-                    router.push({ path: responseData['redirect'] })
+                    router.push({ path: responseData['redirect'] });
                 }
                 else if ( responseData['validation_error'] && responseData['error_messages'] ) {
                     for (const fieldName in responseData['error_messages']) {
@@ -61,6 +64,9 @@
         <div class="auth-container flex justify-center">
             <Card style="width: 25rem; overflow: hidden" class="shadow-xl">
                 <template #header>
+                    <Message class="p-2" v-if="successMessage" severity="success">
+                        {{ successMessage }}
+                    </Message>
                     <div class="flex justify-center items-center">
                         <img alt="login header image" width="120" src="/images/logo.png" />
                     </div>
@@ -99,7 +105,7 @@
                                     <label for="remember_me"> Remember me </label>
                                 </div>
                                 <div>
-                                    <Button variant="link" class="text-sm" >Forgot password ?</Button>
+                                    <Button as="a" variant="link" href="/forgot-password" class="text-sm" >Forgot password ?</Button>
                                 </div>
                             </div>
                             <div class="flex justify-end mt-5">

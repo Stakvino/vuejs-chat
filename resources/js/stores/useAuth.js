@@ -4,6 +4,7 @@ import axios from 'axios';
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         isAuth: false,
+        isEmailVerified: false,
         authUser: null
     }),
     getters: {
@@ -16,13 +17,14 @@ export const useAuthStore = defineStore('auth', {
       setAuthUser(authUser) {
         this.authUser = authUser;
       },
-      fetchAuthUser(successCallback) {
-        axios.get('/api/auth-user')
+      async fetchAuthUser(successCallback) {
+        return axios.get('/api/auth-user')
             .then(response => {
                 const responseData = response['data'];
                 if ( responseData['success'] && responseData['user'] ) {
                     const authUser = responseData['user'];
                     this.authUser = authUser;
+                    this.isEmailVerified = !( authUser['email_verified_at'] === null );
                     if (successCallback) {
                         successCallback(authUser);
                     }

@@ -61,7 +61,7 @@ class RegisteredUserController extends Controller
 
         return response()->json([
             'success' => true,
-            'redirect' => '/login'
+            'redirect' => '/email/verify'
        ]);
     }
 }

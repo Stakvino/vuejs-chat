@@ -15,19 +15,14 @@ class UserController extends Controller
      */
     function getAuthUser() : JsonResponse
     {
-        if ( auth()->check() ) {
-            $user = auth()->user();
-            $response = $user->first(['name', 'username', 'email', 'personal_color'])->toArray();
-            $response['avatar_path'] = $user->avatarPath();
-            return response()->json([
-                'success' => true,
-                'user' => $response
-            ]);
-        }
-
+        $user = auth()->user();
+        $response = $user->first([
+            'name', 'username', 'email', 'personal_color', 'email_verified_at'
+        ])->toArray();
+        $response['avatar_path'] = $user->avatarPath();
         return response()->json([
-            'error' => true,
-            'error_message' => 'User is not signed up'
+            'success' => true,
+            'user' => $response
         ]);
     }
 
@@ -38,41 +33,37 @@ class UserController extends Controller
      */
     function updateProfile(Request $request) : JsonResponse
     {
-        if ( auth()->check() ) {
-            $user = auth()->user();
-            $validator = Validator::make($request->all(), [
-                'name' => ['required', 'string', 'min:3', 'max:30'],
+        \App\Events\OrderShipmentStatusUpdated::dispatch(auth()->user());
+        \App\Events\TestEvent::dispatch();
+
+        $user = auth()->user();
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:3', 'max:30'],
+        ]);
+        if ( $validator->fails() ) {
+            return response()->json([
+                'validation_error' => true,
+                'error_messages' => $validator->errors()
             ]);
-            if ( $validator->fails() ) {
-                return response()->json([
-                    'validation_error' => true,
-                    'error_messages' => $validator->errors()
-               ]);
-            }
-
-            $updateArray = ['name' => $request->name];
-
-            // Store new user avatar if he did upload a file
-            if ( $request->hasFile('avatar') ) {
-                $user->deleteAvatar();
-                $avatar = $user->id . "-" . now()->format('d_m_y_h_i_s');
-                $request->file('avatar')->storeAs('/avatars', $avatar, 'images' );
-                $updateArray['avatar'] = $avatar;
-            }
-            // Also delete avatar if user removed hes image
-            if ($request->get("avatar") == "null") {
-                $user->deleteAvatar();;
-            }
-
-            $user->update($updateArray);
-
-            return response()->json([ 'success' => true]);
         }
 
-        return response()->json([
-            'error' => true,
-            'error_message' => 'User is not signed up'
-        ]);
+        $updateArray = ['name' => $request->name];
+
+        // Store new user avatar if he did upload a file
+        if ( $request->hasFile('avatar') ) {
+            $user->deleteAvatar();
+            $avatar = $user->id . "-" . now()->format('d_m_y_h_i_s');
+            $request->file('avatar')->storeAs('/avatars', $avatar, 'images' );
+            $updateArray['avatar'] = $avatar;
+        }
+        // Also delete avatar if user removed hes image
+        if ($request->get("avatar") == "null") {
+            $user->deleteAvatar();;
+        }
+
+        $user->update($updateArray);
+
+        return response()->json([ 'success' => true]);
     }
 
 }

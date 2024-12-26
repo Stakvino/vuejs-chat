@@ -45,11 +45,11 @@ const NavMenuItems = ref([
     },
 ]);
 
+// Highlight current page link in nav menu
 watchEffect(() => {
     NavMenuItems.value.forEach(NavMenuItem => {
         NavMenuItem.class = currentRouteName.value === NavMenuItem.meta.name ? 'active' : null
     })
-
 })
 
 const { setEditProfileModal } = useModalStore();
@@ -58,10 +58,11 @@ const profileItems = ref([
     {
         label: 'My Profile',
         icon: 'pi pi-user text-purple-500',
-        command: () => {
-            fetchAuthUser(() => {
-                setEditProfileModal(true);
-            });
+        command: async () => {
+            if (isAuth && !authUser.value) {
+                await fetchAuthUser();
+            }
+            setEditProfileModal(true);
         }
     },
     {

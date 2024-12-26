@@ -23,12 +23,16 @@ const updateData = ref({
     avatar: null,
 });
 
-onMounted(() => {
+const avatarPath = ref(authUser.value['avatar_path']);
+const initModal = () => {
     updateData.value.name = authUser.value.name;
     updateData.value.avatar = authUser.value.avatar;
-})
+    avatarPath.value = authUser.value['avatar_path'];
+    showAvatarDeleteBtn.value = avatarPath.value !== defaultAvatarPath;
+}
 
-const avatarPath = ref(authUser.value['avatar_path']);
+onMounted(() => initModal())
+
 const onAvatarChange = () => {
     const files = avatarFileUpload.value.files;
     if (FileReader && files && files.length) {
@@ -94,7 +98,7 @@ const onSave = () => {
 <template>
     <div>
         <Toast />
-        <Dialog v-model:visible="editProfileModalIsVisible" position="top" modal header="Edit Profile" :style="{ width: '25rem' }">
+        <Dialog @show="initModal" v-model:visible="editProfileModalIsVisible" position="top" modal header="Edit Profile" :style="{ width: '25rem' }">
             <div class="flex justify-center items-start my-4 border p-2 rounded">
                 <div class="relative">
                     <Button v-if="showAvatarDeleteBtn" type="button" class="error-button w-6 h-6 !rounded-full top-0 right-0 absolute border border-slate-50" icon="pi pi-times text-xs" raised aria-label="delete avatar" size="small" @click="onDeleteAvatar"></Button>

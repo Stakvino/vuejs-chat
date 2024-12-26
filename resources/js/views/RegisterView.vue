@@ -42,7 +42,7 @@
                 const responseData = response['data'];
                 if ( responseData['success'] && responseData['redirect'] ) {
                     toast.add({ severity: 'success', summary: 'Registering...', life: 3000 });
-                    router.push({ path: responseData['redirect'] })
+                    router.push({ path: responseData['redirect'] });
                 }
                 else if ( responseData['validation_error'] && responseData['error_messages'] ) {
                     for (const fieldName in responseData['error_messages']) {

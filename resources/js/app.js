@@ -9,6 +9,7 @@ import router from '@/router';
 import ToastService from 'primevue/toastservice';
 import { createPinia } from 'pinia';
 
+/*
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import axios from 'axios';
@@ -45,16 +46,16 @@ const laravelEcho = new Echo({
 });
 
 const orderId = 1;
-laravelEcho.private(`.user-order.${orderId}`)
+laravelEcho.private(`user-order.${orderId}`)
 .listen('OrderShipmentStatusUpdated', (e) => {
-    console.log(e.order, 666);
+    console.log(e, 666);
 });
 
 laravelEcho.channel(`test`)
 .listen('TestEvent', (e) => {
     console.log(e, 123);
 });
-
+*/
 const MyPreset = definePreset(Aara, {
     semantic: {
         colorScheme: {

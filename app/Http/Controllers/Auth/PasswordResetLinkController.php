@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class PasswordResetLinkController extends Controller
@@ -17,9 +18,16 @@ class PasswordResetLinkController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => ['required', 'email'],
         ]);
+
+        if ( $validator->fails() ) {
+            return response()->json([
+                'validation_error' => true,
+                'error_messages' => $validator->errors()
+           ]);
+        }
 
         // We will send the password reset link to this user. Once we have attempted
         // to send the link, we will examine the response then see the message we
@@ -29,11 +37,20 @@ class PasswordResetLinkController extends Controller
         );
 
         if ($status != Password::RESET_LINK_SENT) {
-            throw ValidationException::withMessages([
+            return response()->json([
+                'validation_error' => true,
+                'error_messages' => [
+                    "email" => [__($status)]
+                ]
+           ]);
+            /*throw ValidationException::withMessages([
                 'email' => [__($status)],
-            ]);
+            ]);*/
         }
 
-        return response()->json(['status' => __($status)]);
+        return response()->json([
+            'success' => true,
+            'success_message' => __($status),
+        ]);
     }
 }
