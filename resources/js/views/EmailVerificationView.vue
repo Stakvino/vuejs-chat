@@ -37,7 +37,7 @@ onMounted(() => {
         <Toast />
         <div class="auth-container flex flex-col items-center">
             <div>
-                <img width="100" src="/images/logo.png" alt="website logo">
+                <img width="60" src="/images/logo.png" alt="website logo">
             </div>
             <Card>
                 <template #title>

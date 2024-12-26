@@ -6,6 +6,7 @@ import LoginView from '@/views/LoginView.vue';
 import ForgotPasswordView from '@/views/ForgotPasswordView.vue';
 import EmailIsVerifiedView from '@/views/EmailIsVerifiedView.vue';
 import EmailVerificationView from '@/views/EmailVerificationView.vue';
+import PasswordChangeView from '@/views/PasswordChangeView.vue';
 import PasswordResetView from '@/views/PasswordResetView.vue';
 import { useAuthStore } from '@/stores/useAuth';
 import { useAppStore } from '@/stores/useApp';
@@ -58,7 +59,7 @@ const router = createRouter({
         component: EmailIsVerifiedView,
         meta: {
             middleware: ['auth'],
-        },
+        }
     }
     ,{
         path: '/forgot-password',
@@ -75,11 +76,27 @@ const router = createRouter({
         meta: {
             middleware: ['guest'],
         },
-    }
+    },
+    {
+        path: '/password-change',
+        name: 'password-change',
+        component: PasswordChangeView,
+        meta: {
+            middleware: ['auth'],
+        },
+    },
   ]
 })
 
 router.beforeEach(async (to, from) => {
+    /*
+    await axios.get("/sanctum/csrf-cookie")
+    await axios.get("/get-csrf")
+    .then(response => {
+        const token = response.data.token;
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+    });
+    */
     const authStore = useAuthStore();
     const { setIsAuth, fetchAuthUser } = authStore;
     const { isEmailVerified } = storeToRefs(authStore);

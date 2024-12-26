@@ -91,7 +91,7 @@
                             </div>
                             <div class="flex flex-col">
                                 <FloatLabel>
-                                    <Password name="password"  fluid inputId="password_label" class="w-full" toggleMask />
+                                    <Password name="password"  fluid inputId="password_label" class="w-full" toggleMask :feedback="false" />
                                     <label for="password_label">Password</label>
                                 </FloatLabel>
                                 <template v-if="$form.password?.invalid">

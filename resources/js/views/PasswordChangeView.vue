@@ -13,8 +13,6 @@ import axios from 'axios';
 
 const { setContentIsReady } = useAppStore();
 onMounted(() => setContentIsReady(true));
-const token = router.currentRoute.value.params.token;
-const userEmail = router.currentRoute.value.query.email;
 
 const toast = useToast();
 const initialValues = ref({
@@ -39,10 +37,7 @@ const serverErrors = ref({});
 
 const onFormSubmit = ({ valid, states }) => {
     if (valid) {
-        const requestData = primeVueFormStatesToData(states);
-        requestData.email = userEmail;
-        requestData.token = token;
-        axios.post('/reset-password', requestData)
+        axios.post('/update-password', primeVueFormStatesToData(states))
         .then(response => {
             const responseData = response['data'];
             if ( responseData['success'] && responseData['success_message'] ) {
@@ -75,14 +70,24 @@ const onFormSubmit = ({ valid, states }) => {
             </div>
             <Card class="w-11/12 xl:w-4/12 md:w-6/12">
                 <template #title>
-                    <p class="font-bold">Password Reset</p>
-                    <Divider class="border my-2" />
+                    <p class="font-bold">Change your password</p>
+                    <Divider class="border mt-4 mb-0" />
                 </template>
                 <template #content>
-                    <Form v-slot="$form" :resolver="formResolver" :initialValues="initialValues" @submit="onFormSubmit" class="mt-5 flex justify-center flex-col gap-4 w-full" >
+                    <Form v-slot="$form" :resolver="formResolver" :initialValues="initialValues" @submit="onFormSubmit" class="mt-2 flex justify-center flex-col gap-4 w-full" >
                         <div class="flex flex-col">
                             <div class="flex flex-col gap-2">
-                                <label for="password_label">Password</label>
+                                <label for="current_password_label">Current password</label>
+                                <Password name="current_password" fluid inputId="current_password_label" class="w-full" toggleMask :feedback="false" />
+                            </div>
+                            <template v-if="$form.current_password?.invalid">
+                                <Message v-for="(error, index) of $form.current_password.errors" :key="index" severity="error" size="small" variant="simple">{{ error.message }}</Message>
+                            </template>
+                            <Message v-if="serverErrors.current_password" severity="error" size="small" variant="simple">{{ serverErrors.current_password }}</Message>
+                        </div>
+                        <div class="flex flex-col">
+                            <div class="flex flex-col gap-2">
+                                <label for="password_label">New password</label>
                                 <Password name="password"  fluid inputId="password_label" class="w-full" toggleMask />
                             </div>
                             <template v-if="$form.password?.invalid">
@@ -92,11 +97,9 @@ const onFormSubmit = ({ valid, states }) => {
                         </div>
                         <div class="flex flex-col">
                             <div class="flex flex-col gap-2">
-                                <label for="password_confirmation_label">Password Confirmation</label>
+                                <label for="password_confirmation_label">New password confirmation</label>
                                 <Password name="password_confirmation"  fluid inputId="password_confirmation_label" class="w-full" toggleMask />
                             </div>
-                            <input type="hidden" name="email" :value="userEmail">
-                            <input type="hidden" name="token" :value="token">
                             <template v-if="$form.password_confirmation?.invalid">
                                 <Message v-for="(error, index) of $form.password_confirmation.errors" :key="index" severity="error" size="small" variant="simple">{{ error.message }}</Message>
                             </template>
@@ -105,7 +108,7 @@ const onFormSubmit = ({ valid, states }) => {
                         </div>
 
                         <div class="flex justify-center mt-4">
-                            <Button type="submit" rounded class="p-2 action-button w-full" raised>Reset</Button>
+                            <Button type="submit" rounded class="p-2 action-button w-full" raised>Send</Button>
                         </div>
                     </Form>
                 </template>

@@ -12,13 +12,14 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class NewPasswordController extends Controller
 {
     /**
      * Handle an incoming new password request.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @return Illuminate\Http\JsonResponse;
      */
     public function store(Request $request): JsonResponse
     {
@@ -67,4 +68,49 @@ class NewPasswordController extends Controller
             'success_message' => __($status),
         ]);
     }
+
+    /**
+     * Handle password update request.
+     *
+     * @return Illuminate\Http\JsonResponse;
+     */
+    public function update(Request $request): JsonResponse
+    {
+
+        $user = auth()->user();
+        if ( !Hash::check($request->get('current_password'),  $user->password) ) {
+            return response()->json([
+                'validation_error' => true,
+                'error_messages' => ['current_password' => ['The password is not correct']]
+           ]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => ['required'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        if ( $validator->fails() ) {
+            return response()->json([
+                'validation_error' => true,
+                'error_messages' => $validator->errors()
+           ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->string('password')),
+        ]);
+
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'success' => true,
+            'success_message' => 'Password changed',
+        ]);
+    }
+
 }

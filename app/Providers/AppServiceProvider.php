@@ -27,7 +27,6 @@ class AppServiceProvider extends ServiceProvider
         });
 
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
-            // $url = str_replace('/verify-email', '/api/verify-email', $url);
             return (new MailMessage)
                 ->view('mails.verification', ['url' => $url])
                 ->subject('Verify Email Address');

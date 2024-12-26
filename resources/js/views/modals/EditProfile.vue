@@ -119,6 +119,10 @@ const onSave = () => {
                 <InputText v-model="updateData.name" id="name" class="flex-auto" autocomplete="off" />
                 <Message v-if="serverErrors.name" severity="error" size="small" variant="simple">{{ serverErrors.name }}</Message>
             </div>
+            <div class="flex justify-start items-start flex-col gap-1 mb-4">
+                <label class="font-semibold w-24">Password</label>
+                <Button class="py-1 px-2 bg-red-400" as="a" href="/password-change" severity="error">Change password</Button>
+            </div>
             <div class="flex flex-col gap-1 mb-4">
                 <label for="username" class="font-semibold w-24">Username</label>
                 <InputText :value="authUser.username" id="username" class="flex-auto" autocomplete="off" disabled />

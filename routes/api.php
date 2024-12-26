@@ -23,3 +23,8 @@ Route::post('/tokens/create', function (Request $request) {
     $token = $request->user()->createToken($request->token_name);
     return ['token' => $token->plainTextToken];
 });
+
+Route::get('/get-csrf', function (Request $request) {
+    session()->regenerate();
+    return response()->json([ "token" => csrf_token() ], 200);
+});
