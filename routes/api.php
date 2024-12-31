@@ -40,4 +40,5 @@ Route::prefix('channels')->middleware('auth:sanctum')->name('channels.')
     Route::get('/', 'index')->name('index');
     Route::get('/{channel}', 'show')->name('show');
     Route::get('/messages/{channel}', 'getMessages')->name('get-messages');
+    Route::put('/seen/{channel}', 'updateSeen')->name('update-seen');
 });

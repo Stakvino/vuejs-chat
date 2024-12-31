@@ -1,7 +1,6 @@
 <script setup>
     import { AutoComplete, Toast, Badge, Menu, Button, IconField, InputIcon, InputText } from 'primevue';
     import { ref, onMounted, useTemplateRef, watchEffect, computed } from 'vue';
-    import { throttle } from '@/utils/helpers';
     import { useAppStore } from '@/stores/useApp'
     import axios from 'axios';
     import ChatChannel from '@/components/ChatChannel/ChatChannel.vue';
@@ -13,6 +12,14 @@
 
     const selectedChannel = ref();
     const channels = ref();
+    const allChannels = computed(() => {
+        let allChannels = [];
+        for (const type of Object.keys(channels.value)) {
+            allChannels = allChannels.concat(channels.value[type]);
+        }
+        return allChannels;
+    });
+
     onMounted(() => {
         axios.get('/api/channels/')
         .then(response => {
@@ -28,21 +35,25 @@
         axios.get(`/api/channels/messages/${channelId}`)
         .then(response => {
             selectedChannel.value = response.data['channel'];
+
+            // Update unseen messages count to zero when user enter channel chat
+            axios.put(`/api/channels/seen/${selectedChannel.value.id}`)
+            .then(response => {
+                if (response['data']['success']) {
+                    const channel = allChannels.value.filter(channel => {
+                        return channel.id === selectedChannel.value.id;
+                    })[0];
+                    channel.unseenMessagesCount = 0;
+                }
+            })
+
         });
     };
 
-    // Show button that brings user down when they scroll up in chat
-    const onChatScroll = throttle(e => {
-        const target = e.target;
-        const maxScroll = target.scrollHeight - target.clientHeight - 50;
-        if (target.scrollTop < maxScroll) {
-            showChatScrollDownButton.value = true;
-        }else {
-            showChatScrollDownButton.value = false;
-        }
-    }, 30);
+    const onChatShowMounted = () => {
 
-    const publicChannelId = 1;
+    }
+
 </script>
 
 <template>
@@ -56,8 +67,8 @@
         </div>
         <div class="h-full border rounded overflow-y-auto overflow-x-hidden flex sm:justify-center">
             <ul class="m-0 list-none border-surface rounded flex flex-col gap-2 w-full sm:w-96 max-w-full">
-                <ChatChannel v-if="channels"
-                    :channel="channels.public" :selectedChannel="selectedChannel"
+                <ChatChannel v-if="channels" v-for="channel in channels.public"
+                    :channel="channel" :selectedChannel="selectedChannel"
                     :onChannelClick="onChannelClick"
                 />
                 <ChatChannel v-if="channels" v-for="channel in channels.private"
@@ -75,8 +86,9 @@
                     <div class="card rounded-lg h-full flex flex-col">
                         <PrivateChatShow v-if="selectedChannel.isPrivate"
                             :selectedChannel="selectedChannel"
+                            :onChatShowMounted="onChatShowMounted"
                         />
-                        <PublicChatShow v-else :selectedChannel="selectedChannel" />
+                        <PublicChatShow v-else :selectedChannel="selectedChannel" :onChatShowMounted="onChatShowMounted" />
                     </div>
                 </div>
             </div>

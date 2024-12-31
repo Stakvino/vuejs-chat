@@ -81,7 +81,7 @@ class Channel extends Model
     {
         $channel = self::find(1);
         $channel->sender = ['name' => 'Public Chat', 'avatar_path' => '/images/chat/public-chat-icon.png'];
-        $channel->unseenMessagesCount = $channel->unseenMessages()->count();
+        $channel->unseenMessagesCount = $channel->scopeUnseenMessages()->count();
         $channel->lastMessage = $channel->lastMessage();
         if ( $channel->lastMessage ) {
             $channel->lastMessage->since = Helpers::dateTimeFormat($channel->lastMessage->created_at);
@@ -90,12 +90,12 @@ class Channel extends Model
     }
 
     /**
-     * Get the messages that of this channel that the user have not seen yet.
+     * Query the messages that of this channel that the user have not seen yet.
      */
-    public function unseenMessages() : Collection
+    public function scopeUnseenMessages() : HasMany
     {
         return $this->messages()->join('message_seens as ms', 'ms.message_id', 'messages.id')
-        ->where('ms.user_id', auth()->user()->id)->where('is_seen', false)->get();
+        ->where('ms.user_id', auth()->user()->id)->where('is_seen', false);
     }
 
     /**

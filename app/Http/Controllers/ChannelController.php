@@ -23,7 +23,7 @@ class ChannelController extends Controller
         $channels = $user->privateChannels();
         foreach ($channels as $key => $channel) {
             $channel->sender = $channel->senders()->first();
-            $channel->unseenMessagesCount = $channel->unseenMessages()->count();
+            $channel->unseenMessagesCount = $channel->scopeUnseenMessages()->count();
             $channel->lastMessage = $channel->lastMessage();
         }
 
@@ -44,7 +44,7 @@ class ChannelController extends Controller
         return response()->json([
             'success' => true,
             'channels' => [
-                'public' => Channel::publicChannel(),
+                'public' => [Channel::publicChannel()],
                 'private' => $channels
             ]
         ]);
@@ -105,6 +105,18 @@ class ChannelController extends Controller
         return response()->json([
             'success' => true,
             'channel' => $channel
+        ]);
+    }
+
+    /**
+     * Update statut of message (from unseen to seen) when user enter channel to see messages.
+     */
+    public function updateSeen(Channel $channel): JsonResponse
+    {
+        $channel->scopeUnseenMessages()->update(['is_seen' => true]);
+
+        return response()->json([
+            'success' => true,
         ]);
     }
 

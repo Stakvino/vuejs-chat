@@ -4,10 +4,9 @@ import { onMounted, ref, useTemplateRef, watchEffect } from 'vue';
 import ChatMessage from '@/components/ChatMessage/ChatMessage.vue';
 import axios from 'axios';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
+import { throttle } from '@/utils/helpers';
 
-const props = defineProps([
-    'selectedChannel', 'showChatScrollDownButton'
-]);
+const props = defineProps(['selectedChannel', 'onChatShowMounted']);
 
 const showChatScrollDownButton = ref(false);
 const searchInputShow = ref(false);
@@ -50,6 +49,7 @@ onMounted(() => {
     const maxScroll = target.scrollHeight - target.clientHeight;
     target.scrollTo(0, maxScroll);
     target.classList.add("scroll-smooth");
+    props.onChatShowMounted();
 });
 
 // Clicking this button will scroll the chat back to the bottom
@@ -70,6 +70,17 @@ const onShowProfile = () => {
         showProfileIsVisible.value = true;
     })
 }
+
+// Show button that brings user down when they scroll up in chat
+const onChatScroll = throttle(e => {
+    const target = e.target;
+    const maxScroll = target.scrollHeight - target.clientHeight - 50;
+    if (target.scrollTop < maxScroll) {
+        showChatScrollDownButton.value = true;
+    }else {
+        showChatScrollDownButton.value = false;
+    }
+}, 30);
 
 const message = ref();
 </script>
