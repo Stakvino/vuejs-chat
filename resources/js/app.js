@@ -8,6 +8,7 @@ import Aara from '@primevue/themes/aura';
 import router from '@/router';
 import ToastService from 'primevue/toastservice';
 import { createPinia } from 'pinia';
+import Tooltip from 'primevue/tooltip';
 
 /*
 import Echo from 'laravel-echo';
@@ -90,4 +91,5 @@ createApp(app)
 .use(pinia)
 .use(router)
 .use(ToastService)
-.mount('#app')
+.directive('tooltip', Tooltip)
+.mount('#app');

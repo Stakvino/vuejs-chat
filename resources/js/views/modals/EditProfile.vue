@@ -1,16 +1,14 @@
 <script setup>
 import Dialog from 'primevue/dialog';
 import { storeToRefs } from 'pinia';
-import { useModalStore } from '@/stores/useModal';
 import { useAuthStore } from '@/stores/useAuth';
 import { InputText, Button, Avatar, Message, Toast } from 'primevue';
 import { useToast } from "primevue/usetoast";
 import FileUpload from '@/components/FileUpload/FileUpload.vue';
-import { onMounted, ref, useTemplateRef, watch } from 'vue';
+import { onMounted, ref, useTemplateRef, watch, watchEffect } from 'vue';
 import axios from 'axios';
 
-const modalStore = useModalStore();
-const { editProfileModalIsVisible } = storeToRefs(modalStore);
+const isVisible = defineModel();
 const { fetchAuthUser } = useAuthStore();
 let avatarFileUpload = null;
 const getInputRef = (inputRef) => { avatarFileUpload =  inputRef }
@@ -65,7 +63,7 @@ const onSave = () => {
     formData.append('avatar', updateData.value.avatar);
     formData.append('_method', 'PUT');
 
-    axios.post('/api/user/profile/update', formData, {
+    axios.post('/api/users/profile/update', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
@@ -74,7 +72,7 @@ const onSave = () => {
         const responseData = response['data'];
         if ( responseData['success'] ) {
             fetchAuthUser(() => {
-                editProfileModalIsVisible.value = false;
+                isVisible.value = false;
                 toast.add({ severity: 'success', summary: 'Profile edit saved.', life: 3000 });
             });
         }
@@ -98,7 +96,7 @@ const onSave = () => {
 <template>
     <div>
         <Toast />
-        <Dialog @show="initModal" v-model:visible="editProfileModalIsVisible" position="top" modal header="Edit Profile" :style="{ width: '25rem' }">
+        <Dialog @show="initModal" v-model:visible="isVisible" position="top" modal header="Edit Profile" :style="{ width: '25rem' }">
             <div class="flex justify-center items-start my-4 border p-2 rounded">
                 <div class="relative">
                     <Button v-if="showAvatarDeleteBtn" type="button" class="error-button w-6 h-6 !rounded-full top-0 right-0 absolute border border-slate-50" icon="pi pi-times text-xs" raised aria-label="delete avatar" size="small" @click="onDeleteAvatar"></Button>
@@ -132,7 +130,7 @@ const onSave = () => {
                 <InputText :value="authUser.email" id="email" class="flex-auto" autocomplete="off" disabled />
             </div>
             <div class="flex justify-end gap-2 mt-8">
-                <Button class="!py-1 !px-3 sm:!py-2 sm:!px-5 !rounded-md mr-2" raised type="button" label="Cancel" severity="secondary" @click="editProfileModalIsVisible = false"></Button>
+                <Button class="!py-1 !px-3 sm:!py-2 sm:!px-5 !rounded-md mr-2" raised type="button" label="Cancel" severity="secondary" @click="isVisible = false"></Button>
                 <Button class="action-button !py-1 !px-3 sm:!py-2 sm:!px-5 !rounded-md" raised type="button" label="Save" @click="onSave"></Button>
             </div>
         </Dialog>

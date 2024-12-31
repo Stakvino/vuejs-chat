@@ -88,6 +88,22 @@ const router = createRouter({
   ]
 })
 
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response) {
+            if (error.response.status === 401) {
+                // Redirect to login page
+                router.push('/login')
+            } else {
+                // Show a generic error message
+                // console.log('An error occurred. Please try again later.')
+            }
+        }
+        return Promise.reject(error)
+    },
+);
+
 router.beforeEach(async (to, from) => {
     /*
     await axios.get("/sanctum/csrf-cookie")

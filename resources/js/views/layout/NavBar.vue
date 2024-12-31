@@ -52,17 +52,16 @@ watchEffect(() => {
     })
 })
 
-const { setEditProfileModal } = useModalStore();
+const editProfileIsVisible = ref(false);
 const profileMenu = ref();
 const profileItems = ref([
     {
         label: 'My Profile',
         icon: 'pi pi-user text-purple-500',
         command: async () => {
-            if (isAuth && !authUser.value) {
-                await fetchAuthUser();
-            }
-            setEditProfileModal(true);
+            fetchAuthUser(() => {
+                editProfileIsVisible.value = true;
+            })
         }
     },
     {
@@ -120,7 +119,7 @@ const toggleProfileMenu = (event) => {
                             :style="{backgroundColor: authUser['personal_color'], backgroundImage: `url(${authUser['avatar_path']})`, border: 'rgb(150,150,150) solid 1px'}"
                         />
                         <TieredMenu ref="profileMenu" id="profile_menu" :model="profileItems" popup />
-                        <EditProfile />
+                        <EditProfile v-model="editProfileIsVisible" />
                     </div>
                     <div class="py-2" v-else>
                         <RouterLink to="/register">

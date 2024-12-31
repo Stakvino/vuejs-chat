@@ -2,13 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Channel;
+use App\Models\Message;
+use App\Models\ChannelType;
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 
 class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordContract
@@ -55,6 +62,32 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+     /**
+     * Get the private chat channels that the user is subscribed to.
+     */
+    public function channels(): BelongsToMany
+    {
+        return $this->belongsToMany(Channel::class);
+    }
+
+    /**
+     * Get the MessageSeen records of this user.
+     */
+    public function seens(): HasMany
+    {
+        return $this->hasMany(MessageSeen::class);
+    }
+
+    /**
+     * Get all the channels the user is subscribed to except the General chat channel.
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     */
+    public function privateChannels(): Collection
+    {
+        return $this->channels()->where('channels.channel_type_id', ChannelType::PRIVATE_ID)->get();
     }
 
     /**

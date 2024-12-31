@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -16,13 +19,31 @@ class UserController extends Controller
     function getAuthUser() : JsonResponse
     {
         $user = auth()->user();
-        $response = $user->first([
-            'name', 'username', 'email', 'personal_color', 'email_verified_at'
-        ])->toArray();
-        $response['avatar_path'] = $user->avatarPath();
+        $user->avatar_path = $user->avatarPath();
+        $user = $user->only([
+            'name', 'username', 'email', 'personal_color', 'email_verified_at', 'avatar_path'
+        ]);
+
         return response()->json([
             'success' => true,
-            'user' => $response
+            'user' => $user
+        ]);
+    }
+
+    /**
+     * Display the users's info.
+     */
+    public function showProfile(User $user): JsonResponse
+    {
+
+        $user->avatar_path = $user->avatarPath();
+        $user = $user->only([
+            'name', 'username', 'personal_color', 'avatar_path'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'user' => $user
         ]);
     }
 
@@ -33,9 +54,8 @@ class UserController extends Controller
      */
     function updateProfile(Request $request) : JsonResponse
     {
-        \App\Events\OrderShipmentStatusUpdated::dispatch(auth()->user());
-        \App\Events\TestEvent::dispatch();
-
+        // \App\Events\OrderShipmentStatusUpdated::dispatch(auth()->user());
+        // \App\Events\TestEvent::dispatch();
         $user = auth()->user();
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:3', 'max:30'],
@@ -58,7 +78,7 @@ class UserController extends Controller
         }
         // Also delete avatar if user removed hes image
         if ($request->get("avatar") == "null") {
-            $user->deleteAvatar();;
+            $user->deleteAvatar();
         }
 
         $user->update($updateArray);
