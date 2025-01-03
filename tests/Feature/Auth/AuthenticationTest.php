@@ -7,11 +7,13 @@ test('users can authenticate using the login screen', function () {
 
     $response = $this->post('/login', [
         'email' => $user->email,
-        'password' => 'password',
+        'password' => "password",
     ]);
 
     $this->assertAuthenticated();
-    $response->assertNoContent();
+    //$response->assertNoContent();
+    $response->assertStatus(200)
+             ->assertJson(['success' => true, 'redirect' => '/chat']);
 });
 
 test('users can not authenticate with invalid password', function () {
@@ -31,5 +33,6 @@ test('users can logout', function () {
     $response = $this->actingAs($user)->post('/logout');
 
     $this->assertGuest();
-    $response->assertNoContent();
+    $response->assertStatus(200)
+             ->assertJson(['success' => true, 'redirect' => '/']);
 });

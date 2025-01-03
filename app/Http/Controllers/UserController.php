@@ -54,8 +54,6 @@ class UserController extends Controller
      */
     function updateProfile(Request $request) : JsonResponse
     {
-        // \App\Events\OrderShipmentStatusUpdated::dispatch(auth()->user());
-        // \App\Events\TestEvent::dispatch();
         $user = auth()->user();
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:3', 'max:30'],

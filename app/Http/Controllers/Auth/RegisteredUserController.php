@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use App\Models\Channel;
+use App\Models\ChannelUser;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules;
 use Illuminate\Http\JsonResponse;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Validator;
 
 class RegisteredUserController extends Controller
@@ -47,6 +49,12 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
             'personal_color' => $personalColor
+        ]);
+
+        // Subscribe the user automaticly to the public channel
+        ChannelUser::create([
+            'user_id' => $user->id,
+            'channel_id' => Channel::PUBLIC_CHANNEL_ID
         ]);
 
         // Username format example : stak#0005

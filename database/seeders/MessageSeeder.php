@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use App\Models\Channel;
 use App\Models\Message;
 use Illuminate\Database\Seeder;
@@ -14,10 +15,14 @@ class MessageSeeder extends Seeder
      */
     public function run(): void
     {
-        // $channel = Channel::factory()->create();
         Message::factory()
         ->count(200)
-        // ->for($channel)
         ->create();
+        $hadi = User::where('email', 'hadisir@gmail.com')->first();
+        Message::create([
+            'text' => 'am here !',
+            'channel_id' => 1,
+            'user_id' => $hadi->id
+        ]);
     }
 }

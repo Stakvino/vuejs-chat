@@ -61,7 +61,7 @@ const onChatScrollButtonCLick = e => {
 }
 
 // All users in channel except signed user
-const senders = props.selectedChannel.senders;
+const receivers = props.selectedChannel.receivers;
 const senderProfile = ref();
 const showProfileIsVisible = ref(false);
 const onShowProfile = sender => {
@@ -72,6 +72,7 @@ const onShowProfile = sender => {
     })
 }
 
+// Clicking on channel icon will show a modal with channel infos
 const showChannelIsVisible = ref(false);
 const channel = ref();
 const onShowChannel = () => {
@@ -94,6 +95,15 @@ const onChatScroll = throttle(e => {
 }, 30);
 
 const message = ref();
+const onMessageSubmit = () => {
+    const channelId = props.selectedChannel.id;
+    axios.post('/api/messages', { 'text': message.value, 'channel_id': channelId })
+    .then(response => {
+        if ( response.data['success'] ) {
+            message.value = '';
+        }
+    });
+}
 </script>
 
 <template>
@@ -110,7 +120,7 @@ const message = ref();
                     </div>
                     <div class="flex flex-col" v-if="!searchInputShow">
                         <span class="font-bold">Public Chat</span>
-                        <span class="text-xs">Last login 11/08/2024</span>
+                        <span v-if="selectedChannel.lastMessage" class="text-xs">Last message {{ selectedChannel.lastMessage.since }}</span>
                     </div>
                 </span>
                 <div v-if="searchInputShow" class="chat-search w-full flex justify-center">
@@ -157,11 +167,13 @@ const message = ref();
 
         </div>
 
-        <div class="mt-2 mx-auto md:w-10/12 sending-message-input bg-white">
-            <IconField class="w-full">
-                <InputText class="w-full" v-model="message" placeholder="Message" />
-                <InputIcon class="pi pi-send text-xl" />
-            </IconField>
+        <div class="mt-2 mx-auto w-11/12 md:w-10/12 sending-message-input bg-white">
+            <form @submit.prevent="onMessageSubmit">
+                <IconField class="w-full">
+                    <InputText class="w-full" v-model="message" placeholder="Message" />
+                    <InputIcon class="pi pi-send text-xl" />
+                </IconField>
+            </form>
         </div>
 
     </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { Menubar, Button, Avatar, TieredMenu } from 'primevue';
+import { Menubar, Button, Avatar, TieredMenu, Message } from 'primevue';
 import EditProfile from '@/views/modals/EditProfile.vue';
 import { ref, onMounted, watchEffect, computed } from "vue";
 import { RouterLink, useRouter } from 'vue-router';
@@ -12,7 +12,7 @@ import axios from 'axios';
 const { setNavIsReady } = useAppStore();
 const { setIsAuth, setAuthUser, fetchAuthUser } = useAuthStore();
 const authStore = useAuthStore();
-const { isAuth, authUser } = storeToRefs(authStore);
+const { isAuth, authUser, authFetchError } = storeToRefs(authStore);
 
 onMounted(() => setNavIsReady(true));
 
@@ -59,9 +59,8 @@ const profileItems = ref([
         label: 'My Profile',
         icon: 'pi pi-user text-purple-500',
         command: async () => {
-            fetchAuthUser(() => {
-                editProfileIsVisible.value = true;
-            })
+            fetchAuthUser()
+            .then(() => editProfileIsVisible.value = true)
         }
     },
     {
@@ -120,6 +119,9 @@ const toggleProfileMenu = (event) => {
                         />
                         <TieredMenu ref="profileMenu" id="profile_menu" :model="profileItems" popup />
                         <EditProfile v-model="editProfileIsVisible" />
+                    </div>
+                    <div v-else-if="authFetchError" class="w-full m-2">
+                        <Message class="w-full" severity="error" icon="pi pi-exclamation-circle">Server error</Message>
                     </div>
                     <div class="py-2" v-else>
                         <RouterLink to="/register">

@@ -17,7 +17,7 @@ const authStore = useAuthStore();
 const { authUser } = storeToRefs(authStore)
 
 const updateData = ref({
-    name: authUser.name,
+    name: authUser.value.name,
     avatar: null,
 });
 
@@ -71,7 +71,8 @@ const onSave = () => {
     .then(response => {
         const responseData = response['data'];
         if ( responseData['success'] ) {
-            fetchAuthUser(() => {
+            fetchAuthUser()
+            .then(() => {
                 isVisible.value = false;
                 toast.add({ severity: 'success', summary: 'Profile edit saved.', life: 3000 });
             });

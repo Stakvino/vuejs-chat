@@ -68,25 +68,10 @@ class Channel extends Model
     /**
      * Get the all users that are subscribed to the channel except the signed user.
      */
-    public function senders(): Collection
+    public function receivers(): Collection
     {
         return $this->users()->whereNot('users.id', auth()->user()->id)
         ->select('name', 'personal_color', 'users.id')->get();
-    }
-
-    /**
-     * Get the public channel infos.
-     */
-    public static function publicChannel() : Channel
-    {
-        $channel = self::find(1);
-        $channel->sender = ['name' => 'Public Chat', 'avatar_path' => '/images/chat/public-chat-icon.png'];
-        $channel->unseenMessagesCount = $channel->scopeUnseenMessages()->count();
-        $channel->lastMessage = $channel->lastMessage();
-        if ( $channel->lastMessage ) {
-            $channel->lastMessage->since = Helpers::dateTimeFormat($channel->lastMessage->created_at);
-        }
-        return $channel;
     }
 
     /**
@@ -101,15 +86,25 @@ class Channel extends Model
     /**
      * Get some of the most recent messages in this channel.
      */
-    public function latestMessages(Int $messagesCount, string $fromDate = null) : Collection
+    public function getMessages(Int $messagesCount, string $fromDate = null) : Collection
     {
         $query = $this->messages();
         if ( $fromDate ) {
             $fromDate = date('d-m-Y H:i:s', strtotime($fromDate));
             $query->where('created_at', '<=', $fromDate);
         }
-        return $query->OrderBy('created_at', 'desc')
+        $messages = $query->OrderBy('created_at', 'desc')
             ->take($messagesCount)->get()->reverse()->values();
+
+        return $messages->map(function($message) {
+            $message->format_created_at = $message->created_at->format('h:i');
+            $message->isMyMessage = $message->isMyMessage();
+            $message->usersSeen = $message->usersSeen();
+            $message->isSeenByAuth = $message->isSeenBy(auth()->user());
+            $message->sender = $message->sender();
+            $message->sender->avatar_path = $message->sender->avatarPath();
+            return $message;
+        });
     }
 
     /**

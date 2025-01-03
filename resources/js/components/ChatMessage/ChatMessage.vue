@@ -23,15 +23,17 @@ if (showSeenMessage) {
 <template>
     <div class="flex justify-start items-start w-full" :class="isMyMessage ? 'flex-row-reverse' : null">
         <div v-if="mustShowSender"
-            class="sender-avatar mx-2 mt-1"
+            class="sender-avatar mx-1 mt-1"
             :style="{backgroundColor: sender.personal_color}"
             @click="onShowProfile(sender)"
             v-tooltip.left="sender.name"
         >
-            <div class="rounded-full w-8 h-8 bg-cover"
+            <div class="rounded-full w-full h-full bg-cover"
+                style="border: rgba(200,200,200,.9) solid 1px"
                 :style="{
-                backgroundColor: sender.personal_color,
-                backgroundImage: `url(${sender.avatar_path})`            }"
+                    backgroundColor: sender.personal_color,
+                    backgroundImage: `url(${sender.avatar_path})`
+                }"
             >
             </div>
         </div>
@@ -60,8 +62,8 @@ if (showSeenMessage) {
 <style>
 .sender-avatar {
     border-radius: 99.99%;
-    width: 30px;
-    height: 30px;
+    width: 38px;
+    height: 38px;
 }
 .chat-messages-container {
     height: calc( 100% - 60px);
@@ -72,7 +74,7 @@ if (showSeenMessage) {
 .my-message-container,
 .others-message-container {
     border-radius: 20px;
-    padding: 8px 10px;
+    padding: 8px 15px;
     border: rgba(200, 200, 200, .5) solid 1px;
     margin-bottom: 15px;
     display: inline;

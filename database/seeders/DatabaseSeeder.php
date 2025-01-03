@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             ChannelSeeder::class,
-            MessageSeeder::class,
+            // MessageSeeder::class,
             ChannelTypeSeeder::class,
         ]);
     }

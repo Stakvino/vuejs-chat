@@ -9,5 +9,7 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertNoContent();
+
+    $response->assertStatus(200)
+             ->assertJson(['success' => true, 'redirect' => '/email/verify']);
 });

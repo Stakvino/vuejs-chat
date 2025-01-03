@@ -70,6 +70,7 @@ class Message extends Model
     public function usersSeen(): Collection
     {
         return User::join('message_seens', 'message_seens.user_id', 'users.id')
+        ->where('message_seens.is_seen', true)
         ->where('message_seens.message_id', $this->id)
         ->whereNot('users.id', auth()->user()->id)
         ->select(
@@ -83,7 +84,7 @@ class Message extends Model
      */
     public function isSeenBy(User $user): bool
     {
-        return $this->seens()->where('user_id', $user->id)->first()->is_seen ?? false;
+        return $this->seens()->where('user_id', $user->id)->first()->is_seen;
     }
 
 }

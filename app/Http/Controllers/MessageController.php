@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Channel;
+use App\Models\Message;
+use App\Events\MessageSent;
+use App\Models\ChannelType;
+use Illuminate\Http\JsonResponse;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Requests\UpdateMessageRequest;
-use App\Models\Message;
 
 class MessageController extends Controller
 {
@@ -26,10 +31,36 @@ class MessageController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     *
+     *  @return Illuminate\Http\JsonResponse
      */
-    public function store(StoreMessageRequest $request)
+    public function store(StoreMessageRequest $request) : JsonResponse
     {
-        //
+        $sender = auth()->user();
+        if ( $request->get('channel_id') ) {
+            $channel = Channel::find($request->get('channel_id'));
+        }
+        else {
+            // Create the new channel if it doesnt exist
+            $receivers_ids = $request->get('receivers_ids');
+            $channelIsPrivate = $receivers_ids && sizeof($receivers_ids) === 1;
+            $channel = Channel::create([
+                'channel_type_id' => $channelIsPrivate ? ChannelType::PRIVATE_ID : ChannelType::PUBLIC_ID
+            ]);
+            // Subscribe the users to the channel
+            $sender->subscribeTo($channel);
+            if ( $receivers_ids ) {
+                foreach ($receivers_ids as $receiver_id) {
+                    User::find($receiver_id)->subscribeTo($channel);
+                }
+            }
+        }
+
+        $sender->sendMessage($channel, $request->get('text'));
+
+        MessageSent::dispatch($channel);
+
+        return response()->json(['success' => true]);
     }
 
     /**

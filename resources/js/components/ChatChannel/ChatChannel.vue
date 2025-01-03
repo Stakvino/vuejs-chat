@@ -17,18 +17,18 @@ const formatMessageCount = count => count > 99 ? "99+" : count;
         <div class="rounded-full w-8 h-8 bg-cover"
             :style="
             {
-                backgroundColor: channel.sender.personal_color,
-                backgroundImage: `url(${channel.sender.avatar_path})`
+                backgroundColor: channel.receiver.personal_color,
+                backgroundImage: `url(${channel.receiver.avatar_path})`
             }"
         >
         </div>
         <div class="flex flex-col max-w-full" style="width: calc(100% - 40px);">
-            <span class="font-bold">{{ channel.sender.name }}</span>
-            <p class="text-sm truncate">{{ channel.lastMessage.text }}</p>
+            <span class="font-bold">{{ channel.receiver.name }}</span>
+            <p v-if="channel.lastMessage" class="text-sm truncate">{{ channel.lastMessage.text }}</p>
         </div>
     </div>
     <div class="flex flex-col items-end h-full w-2/12">
-        <div class="message-date text-xs">
+        <div v-if="channel.lastMessage" class="message-date text-xs">
             {{ channel.lastMessage.since }}
         </div>
         <div v-if="channel.unseenMessagesCount > 0" class="new-messages-count">

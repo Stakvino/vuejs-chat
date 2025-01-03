@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/useAuth';
 import { useAppStore } from '@/stores/useApp';
 import { storeToRefs } from 'pinia';
 import axios from 'axios';
+import NotFoundView from '@/views/NotFoundView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -85,6 +86,11 @@ const router = createRouter({
             middleware: ['auth'],
         },
     },
+    {
+        path: '/not-found',
+        name: 'not-found',
+        component: NotFoundView,
+    },
   ]
 })
 
@@ -114,39 +120,35 @@ router.beforeEach(async (to, from) => {
     });
     */
     const authStore = useAuthStore();
-    const { setIsAuth, fetchAuthUser } = authStore;
-    const { isEmailVerified } = storeToRefs(authStore);
-    let isAuth = false;
+    const { setIsAuth, fetchAuthUser, fetchAuthCheck } = authStore;
+    const { isEmailVerified, isAuth, authCheckError, authFetchError } = storeToRefs(authStore);
 
     const { setCurrentRouteName } = useAppStore();
     setCurrentRouteName(to.name || null);
 
-    await axios.get('/api/auth-check')
-    .then(response => {
-        isAuth = !!response.data;
-        setIsAuth(isAuth || null);
-    })
-    .catch(e => console.log('catch error response', e))
+    await fetchAuthCheck()
 
-    if (isAuth) {
+    if (isAuth.value) {
         await fetchAuthUser();
     }
 
     const middleware = to.meta.middleware;
     if ( !middleware ) return;
-    if ( !isAuth && middleware.includes('auth') ) {
+
+    if ( !isAuth.value && middleware.includes('auth') ) {
       return { name: 'login' }
     }
-    else if ( !isEmailVerified.value && middleware.includes('verified') ) {
+    else if ( !authFetchError && !isEmailVerified.value && middleware.includes('verified') ) {
         return { name: 'email-verification' }
     }
     // This middleware is used for people who want to access email verification page even tho they are already verified
-    else if ( isEmailVerified.value && middleware.includes('not-verified') ) {
+    else if ( !authFetchError && isEmailVerified.value && middleware.includes('not-verified') ) {
         return { name: 'email-is-verified' }
     }
-    else if ( isAuth && middleware.includes('guest') ) {
+    else if ( isAuth.value && middleware.includes('guest') ) {
         return { name: 'home' }
     }
+
 })
 
 export default router

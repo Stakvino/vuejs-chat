@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Utils\Helpers;
 use App\Models\Channel;
 use App\Models\Message;
 use App\Models\ChannelType;
+use App\Models\ChannelUser;
+use App\Models\MessageSeen;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Notifications\Notifiable;
@@ -81,13 +84,119 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     }
 
     /**
-     * Get all the channels the user is subscribed to except the General chat channel.
+     * Get all the private channels the user is subscribed to.
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
     public function privateChannels(): Collection
     {
-        return $this->channels()->where('channels.channel_type_id', ChannelType::PRIVATE_ID)->get();
+        $channels = $this->channels()
+        ->where('channels.channel_type_id', ChannelType::PRIVATE_ID)
+        ->get();
+
+        foreach ($channels as $key => $channel) {
+            $channel->receiver = $channel->receivers()->first();
+            $channel->unseenMessagesCount = $channel->scopeUnseenMessages()->count();
+            $channel->lastMessage = $channel->lastMessage();
+        }
+
+        // Formating dates and adding users avatar path
+        $channels = $channels->map(function($channel) {
+            $channel->receiver->avatar_path = $channel->receiver->avatarPath();
+            if ( $channel->lastMessage ) {
+                $channel->lastMessage->since = Helpers::dateTimeFormat($channel->lastMessage->created_at);
+            }
+
+            return $channel;
+        });
+
+        /*
+        $channels = $channels->sortBy(function ($channel) {
+            return $channel->lastMessage->created_at;
+        });
+        */
+
+        // Fix index changes because google chrome will change then back
+        return $channels->sortBy('updated_at')->values();
+    }
+
+    /**
+     * Get all the public channels the user is subscribed to.
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     */
+    public function publicChannels(): Collection
+    {
+        $channels = $this->channels()
+        ->where('channels.channel_type_id', ChannelType::PUBLIC_ID)
+        ->get()->map(function($channel) {
+            $channel->receiver = [
+                'name' => 'Public Chat',
+                'avatar_path' => Channel::DEFAULT_CHANNEL_ICON
+            ];
+            $channel->unseenMessagesCount = $channel->scopeUnseenMessages()->count();
+            $channel->lastMessage = $channel->lastMessage();
+            if ( $channel->lastMessage ) {
+                $channel->lastMessage->since = Helpers::dateTimeFormat($channel->lastMessage->created_at);
+            }
+
+            return $channel;
+        });
+
+        return $channels->sortBy('updated_at')->values();;
+    }
+
+    /**
+     *  Check if user is subscribed to channel
+     *
+     * @return App\Models\ChannelUser
+     */
+    public function isSubscribedTo(Channel $channel): ChannelUser
+    {
+        return ChannelUser::where('user_id', $this->id)
+        ->where('channel_id', $channel->id)->first();
+    }
+
+    /**
+     *  Subscribe user to channel
+     *
+     * @return App\Models\ChannelUser
+     */
+    public function subscribeTo(Channel $channel): ChannelUser
+    {
+        return ChannelUser::create([
+            'user_id' => $this->id,
+            'channel_id' => $channel->id
+        ]);
+    }
+
+    /**
+     *  Store message and dispatch event
+     *
+     * @return App\Models\Message
+     */
+    public function sendMessage(Channel $channel, string $text): Message
+    {
+        $message = Message::create([
+            'text' => $text,
+            'channel_id' => $channel->id,
+            'user_id' => $this->id,
+        ]);
+
+        $messageSeens = $channel->members()->map(function($member) use($message) {
+            return [
+                'message_id' => $message->id,
+                'user_id' => $member->id,
+                'is_seen' => $member->id === $this->id ? true : false
+            ];
+        });
+
+        MessageSeen::insert($messageSeens->toArray());
+        $channel->update(['updated_at' => now()]);
+
+        // Dispatch event
+
+        return $message;
     }
 
     /**

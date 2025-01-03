@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\ChannelType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,8 +17,10 @@ class ChannelFactory extends Factory
      */
     public function definition(): array
     {
+        $privateId = 2;
         return [
-            'channel_type_id' => fake()->numberBetween(1, 2),
+            // 'channel_type_id' => fake()->numberBetween(1, 2),
+            'channel_type_id' => $privateId,
             'created_at' => now(),
         ];
     }

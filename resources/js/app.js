@@ -46,7 +46,6 @@ const laravelEcho = new Echo({
     },
 });
 
-const orderId = 1;
 laravelEcho.private(`user-order.${orderId}`)
 .listen('OrderShipmentStatusUpdated', (e) => {
     console.log(e, 666);
