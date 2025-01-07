@@ -12,9 +12,15 @@ class Helpers
      */
     public static function dateTimeFormat(Carbon $datetime): String
     {
+        if ( $datetime->isToday() ) {
+            return $datetime->format('h:i');
+        }
+        return $datetime->format('d/m/Y');
+        /*
         return $datetime->diffForHumans(now(), [
             'options' => Carbon::JUST_NOW | Carbon::ONE_DAY_WORDS | 0,
             'syntax' => CarbonInterface::DIFF_ABSOLUTE
         ]);
+        */
     }
 }

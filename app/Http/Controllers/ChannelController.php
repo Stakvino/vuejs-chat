@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Utils\Helpers;
 use App\Models\Channel;
+use App\Models\ChannelType;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\StoreChannelRequest;
@@ -24,8 +25,8 @@ class ChannelController extends Controller
         return response()->json([
             'success' => true,
             'channels' => [
-                'public' => $user->publicChannels(),
-                'private' => $user->privateChannels()
+                'public' => $user->getChannels(ChannelType::PUBLIC_ID),
+                'private' => $user->getChannels(ChannelType::PRIVATE_ID)
             ]
         ]);
     }
@@ -61,15 +62,20 @@ class ChannelController extends Controller
     }
 
     /**
+     * Get additional info abou the channel.
+     */
+    public function getInfo(Channel $channel): array
+    {
+        return $channel->getInfo();
+    }
+
+    /**
      * Display the channel's messages.
      */
     public function getMessages(Channel $channel): JsonResponse
     {
         $channel->messages = $channel->getMessages(10);
-        $channel->receivers = $channel->receivers()->map(function($receiver) {
-            $receiver->avatar_path = $receiver->avatarPath();
-            return $receiver;
-        });
+        $channel->receivers = $channel->receivers();
 
         $channel->isPrivate = $channel->isPrivate();
 

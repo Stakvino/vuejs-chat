@@ -70,8 +70,13 @@ class Channel extends Model
      */
     public function receivers(): Collection
     {
-        return $this->users()->whereNot('users.id', auth()->user()->id)
+        $users = $this->users()->whereNot('users.id', auth()->user()->id)
         ->select('name', 'personal_color', 'users.id')->get();
+
+        return $users->map(function ($user) {
+            $user->avatar_path = $user->avatarPath();
+            return  $user;
+        });
     }
 
     /**
@@ -84,7 +89,42 @@ class Channel extends Model
     }
 
     /**
-     * Get some of the most recent messages in this channel.
+     * Get the data neccessery for the front-end rendering of the channel.
+     */
+    public function getInfo(): array
+    {
+        $receiver =  $this->isPrivate() ? $this->receivers()->first()
+        :
+        [
+            'name' => $this->name,
+            'avatar_path' => $this->icon
+        ];
+
+        $lastMessage = $this->lastMessage();
+        if ( $lastMessage ) {
+            $lastMessage->since = Helpers::dateTimeFormat($lastMessage->created_at);
+        }
+
+        return [
+            'type' => $this->type,
+            'receiver' => $receiver,
+            'unseenMessagesCount' => $this->scopeUnseenMessages()->count(),
+            'lastMessage' => $lastMessage,
+        ];
+    }
+
+    /**
+     * Get one message withh all the other data needed to render it on the fornt-end.
+     */
+    public function getMessage(Int $messagesId) : Message
+    {
+        $message = Message::find($messagesId);
+        $message['info'] = $message->getInfo();
+        return $message;
+    }
+
+    /**
+     * Get some of the most recent messages in this channel withh all the other data needed to render it on the fornt-end.
      */
     public function getMessages(Int $messagesCount, string $fromDate = null) : Collection
     {
@@ -97,12 +137,7 @@ class Channel extends Model
             ->take($messagesCount)->get()->reverse()->values();
 
         return $messages->map(function($message) {
-            $message->format_created_at = $message->created_at->format('h:i');
-            $message->isMyMessage = $message->isMyMessage();
-            $message->usersSeen = $message->usersSeen();
-            $message->isSeenByAuth = $message->isSeenBy(auth()->user());
-            $message->sender = $message->sender();
-            $message->sender->avatar_path = $message->sender->avatarPath();
+            $message->info = $message->getInfo();
             return $message;
         });
     }

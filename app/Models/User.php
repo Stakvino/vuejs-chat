@@ -84,66 +84,49 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     }
 
     /**
-     * Get all the private channels the user is subscribed to.
+     * Get the channels the user is subscribed to.
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
-    public function privateChannels(): Collection
+    public function getChannels(int $typeId = null): Collection
     {
         $channels = $this->channels()
-        ->where('channels.channel_type_id', ChannelType::PRIVATE_ID)
-        ->get();
-
-        foreach ($channels as $key => $channel) {
-            $channel->receiver = $channel->receivers()->first();
-            $channel->unseenMessagesCount = $channel->scopeUnseenMessages()->count();
-            $channel->lastMessage = $channel->lastMessage();
-        }
-
-        // Formating dates and adding users avatar path
-        $channels = $channels->map(function($channel) {
-            $channel->receiver->avatar_path = $channel->receiver->avatarPath();
-            if ( $channel->lastMessage ) {
-                $channel->lastMessage->since = Helpers::dateTimeFormat($channel->lastMessage->created_at);
-            }
-
+        ->when($typeId, function ($q) use($typeId) {
+            return $q->where('channels.channel_type_id', $typeId);
+        })
+        ->get()->map(function ($channel) {
+            $channel->info = $channel->getInfo();
             return $channel;
         });
-
-        /*
-        $channels = $channels->sortBy(function ($channel) {
-            return $channel->lastMessage->created_at;
-        });
-        */
 
         // Fix index changes because google chrome will change then back
         return $channels->sortBy('updated_at')->values();
     }
 
     /**
-     * Get all the public channels the user is subscribed to.
+     *  Check if user is subscribed to a private channel with another user
      *
-     * @return Illuminate\Database\Eloquent\Collection
+     * @return App\Models\Channel | null
      */
-    public function publicChannels(): Collection
+    public function inChannelWith(User $user): Channel | null
     {
-        $channels = $this->channels()
-        ->where('channels.channel_type_id', ChannelType::PUBLIC_ID)
-        ->get()->map(function($channel) {
-            $channel->receiver = [
-                'name' => 'Public Chat',
-                'avatar_path' => Channel::DEFAULT_CHANNEL_ICON
-            ];
-            $channel->unseenMessagesCount = $channel->scopeUnseenMessages()->count();
-            $channel->lastMessage = $channel->lastMessage();
-            if ( $channel->lastMessage ) {
-                $channel->lastMessage->since = Helpers::dateTimeFormat($channel->lastMessage->created_at);
+        $authChannels = ChannelUser::join('channels', 'channels.id', 'channel_user.channel_id')
+        ->where('channels.channel_type_id', ChannelType::PRIVATE_ID)
+        ->where('channel_user.user_id', $this->id)->get();
+
+        $userChannels = ChannelUser::join('channels', 'channels.id', 'channel_user.channel_id')
+        ->where('channels.channel_type_id', ChannelType::PRIVATE_ID)
+        ->where('channel_user.user_id', $user->id)->get();
+
+        foreach ($authChannels as $authChannel) {
+            foreach ($userChannels as $userChannel) {
+                if ( $authChannel->channel_id === $userChannel->channel_id ) {
+                    return Channel::find($authChannel->channel_id);
+                }
             }
+        }
 
-            return $channel;
-        });
-
-        return $channels->sortBy('updated_at')->values();;
+        return null;
     }
 
     /**

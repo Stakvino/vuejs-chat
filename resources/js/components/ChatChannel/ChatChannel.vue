@@ -1,8 +1,17 @@
 <script setup>
 import { Badge, Divider } from 'primevue';
+import { dateTimeFormat } from '@/utils/helpers';
+import { computed } from 'vue';
 
-const props = defineProps(['channel', 'onChannelClick', 'selectedChannel']);
-const formatMessageCount = count => count > 99 ? "99+" : count;
+const props = defineProps([
+    'channel', 'onChannelClick', 'selectedChannel', 'unseenMessagesCount'
+]);
+
+const formatMessageCount = computed(() => {
+    const maxUnseenMessagesCount = 99;
+    const count = props.channel.info.unseenMessagesCount;
+    return count > maxUnseenMessagesCount ? maxUnseenMessagesCount + "+" : count;
+})
 
 </script>
 
@@ -17,23 +26,23 @@ const formatMessageCount = count => count > 99 ? "99+" : count;
         <div class="rounded-full w-8 h-8 bg-cover"
             :style="
             {
-                backgroundColor: channel.receiver.personal_color,
-                backgroundImage: `url(${channel.receiver.avatar_path})`
+                backgroundColor: channel.info.receiver.personal_color,
+                backgroundImage: `url(${channel.info.receiver.avatar_path})`
             }"
         >
         </div>
         <div class="flex flex-col max-w-full" style="width: calc(100% - 40px);">
-            <span class="font-bold">{{ channel.receiver.name }}</span>
-            <p v-if="channel.lastMessage" class="text-sm truncate">{{ channel.lastMessage.text }}</p>
+            <span class="font-bold">{{ channel.info.receiver.name }}</span>
+            <p v-if="channel.info.lastMessage" class="text-sm truncate">{{ channel.info.lastMessage.text }}</p>
         </div>
     </div>
     <div class="flex flex-col items-end h-full w-2/12">
-        <div v-if="channel.lastMessage" class="message-date text-xs">
-            {{ channel.lastMessage.since }}
+        <div v-if="channel.info.lastMessage" class="message-date text-xs">
+            {{ dateTimeFormat(channel.info.lastMessage.created_at) }}
         </div>
-        <div v-if="channel.unseenMessagesCount > 0" class="new-messages-count">
+        <div v-if="channel.info.unseenMessagesCount > 0" class="new-messages-count">
             <Badge
-                :value="formatMessageCount(channel.unseenMessagesCount)"
+                :value="formatMessageCount"
                 severity="secondary" size="small"
             >
             </Badge>

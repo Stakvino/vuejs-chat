@@ -4,8 +4,7 @@ import { ref, onMounted, useTemplateRef, watchEffect, computed } from 'vue';
 import { useAppStore } from '@/stores/useApp'
 import axios from 'axios';
 import ChatChannel from '@/components/ChatChannel/ChatChannel.vue';
-import PrivateChatShow from '@/components/ChatShow/PrivateChatShow.vue';
-import PublicChatShow from '@/components/ChatShow/PublicChatShow.vue';
+import ChatShow from '@/components/ChatShow/ChatShow.vue';
 import { initChatBroadcasting } from '@/utils/broadcast';
 
 const { setContentIsReady } = useAppStore();
@@ -18,47 +17,111 @@ const allChannels = computed(() => {
     for (const type of Object.keys(channels.value)) {
         allChannels = allChannels.concat(channels.value[type]);
     }
+
     return allChannels;
 });
 
-const channelsFetchError = ref(false);
-onMounted(() => {
+// Update channel last message and time when user send message
+const updateChannel = (channelId, updatedChannel) => {
+    let channelHasBeenFound = false;
+    // Loop over all types of channels (private, public, ...)
+    for (const type of Object.keys(channels.value)) {
+        channels.value[type].forEach((channel, index) => {
+            if (channel.id === channelId) {
+                channels.value[type][index] = updatedChannel;
+                channelHasBeenFound = true;
+                return;
+            }
+        });
+        if (channelHasBeenFound) {
+            break;
+        }
+    }
 
-    axios.get('/api/channels/')
+    // if the channel doesnt exist in the list we should add it
+    if ( !channelHasBeenFound ) {
+        const type = updatedChannel.type.name;
+        channels.value[type].unshift(updatedChannel);
+    }
+
+}
+
+const channelsFetchError = ref(false);
+onMounted(async () => {
+    await axios.get('/api/channels/')
     .then(response => {
         channelsFetchError.value = false;
         channels.value = response.data['channels'];
     })
     .catch(e => {
         channelsFetchError.value = true;
-    })
-    .then(() => {
-        initChatBroadcasting(allChannels.value);
+        console.log(e);
     });
+
+    const laravelEcho = initChatBroadcasting();
+    for (const channel of allChannels.value) {
+        laravelEcho.private(`chat-channel.${channel.id}`)
+        .listen('MessageSent', data => {
+            // Update messages listing
+            const newMessage = {
+                ...data.message,
+                // 'info': { ...data.messageInfo }
+            };
+            // Update channels listing
+            const updatedChannel = {
+                ...data.channel,
+                // 'info': { ...data.channelInfo }
+            };
+
+            // if user is in the channel that received message and he is scrolled down
+            // we will assume he saw the messages... for now
+            const isSelectedChannel = selectedChannel.value && channel.id === selectedChannel.value.id;
+            const userSawMessage = isSelectedChannel && isScrolledToBottom.value;
+            axios.put(`/api/users/message-event-received/${data.channel.id}/${data.message.id}`,
+            {
+                userSawMessage
+            })
+            .then(response => {
+                if (response.data.success) {
+                    newMessage.info = response.data.messageInfo;
+                    if ( isSelectedChannel ) {
+                        selectedChannel.value.messages.push(newMessage);
+                    }
+                    updatedChannel.info = response.data.channelInfo;
+                    updateChannel(channel.id, updatedChannel);
+                    isScrolledToBottom.value = false;
+                }
+            })
+        });
+    }
 
     setContentIsReady(true);
 })
 
 // Track the last message sent so that you can load more when the user scroll up
 const lastMessage = ref();
-const onChannelClick = (event, channelId) => {
+const isScrolledToBottom = ref(false);
+const onChannelClick = async (event, channelId) => {
     if (selectedChannel.value && channelId === selectedChannel.value.id) return;
-    axios.get(`/api/channels/messages/${channelId}`)
+
+    await axios.get(`/api/channels/messages/${channelId}`)
     .then(response => {
         selectedChannel.value = response.data['channel'];
-    })
-    .then(() => {
-        // Update unseen messages count to zero when user enter channel chat
-        axios.put(`/api/channels/seen/${selectedChannel.value.id}`)
-        .then(response => {
-            if (response['data']['success']) {
-                const channel = allChannels.value.filter(channel => {
-                    return channel.id === selectedChannel.value.id;
-                })[0];
-                channel.unseenMessagesCount = 0;
-            }
-        })
+        isScrolledToBottom.value = false;
     });
+
+    // Update unseen messages count to zero when user enter channel chat
+    axios.put(`/api/channels/seen/${selectedChannel.value.id}`)
+    .then(response => {
+        if (response['data']['success']) {
+            allChannels.value.forEach(channel => {
+                if ( channel.id === selectedChannel.value.id ) {
+                    channel.info.unseenMessagesCount = 0;
+                }
+            });
+        }
+    });
+
 };
 
 const onChatShowMounted = () => {
@@ -98,12 +161,10 @@ const onChatShowMounted = () => {
             <div class="rounded w-full h-full bg-cover" style="background-image: url('/images/chat/bg.jpg');">
                 <div class="w-full h-full pb-2" v-if="selectedChannel">
                     <div class="card rounded-lg h-full flex flex-col">
-                        <PrivateChatShow v-if="selectedChannel.isPrivate"
-                            :selectedChannel="selectedChannel"
+                        <ChatShow :selectedChannel="selectedChannel"
                             :onChatShowMounted="onChatShowMounted"
-                        />
-                        <PublicChatShow v-else :selectedChannel="selectedChannel"
-                            :onChatShowMounted="onChatShowMounted"
+                            :isScrolledToBottom="isScrolledToBottom"
+                            @chat-scrolled-down="isScrolledToBottom = true"
                         />
                     </div>
                 </div>

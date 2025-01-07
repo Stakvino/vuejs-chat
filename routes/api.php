@@ -32,6 +32,7 @@ Route::get('/get-csrf', function (Request $request) {
 
 Route::prefix('users')->name('users.')
 ->controller(UserController::class)->group(function () {
+    Route::put('/message-event-received/{channel}/{message}', 'messageEventReceived')->name('message-event-received')->middleware(['auth:sanctum', 'verified']);
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/{user}', 'showProfile')->name('show')->middleware(['auth:sanctum', 'verified']);
         Route::put('/update', 'updateProfile')->name('update')->middleware(['auth:sanctum', 'verified']);
@@ -44,9 +45,11 @@ Route::prefix('channels')->middleware(['auth:sanctum', 'verified'])->name('chann
     Route::get('/{channel}', 'show')->name('show');
     Route::get('/messages/{channel}', 'getMessages')->name('get-messages');
     Route::put('/seen/{channel}', 'updateSeen')->name('update-seen');
+    Route::get('getinfo/{channel}', 'getInfo')->name('get-info');
 });
 
 Route::prefix('messages')->middleware(['auth:sanctum', 'verified'])->name('messages.')
 ->controller(MessageController::class)->group(function () {
     Route::post('/', 'store')->name('store');
+    Route::get('getinfo/{message}', 'getInfo')->name('get-info');
 });

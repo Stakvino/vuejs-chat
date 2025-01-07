@@ -44,21 +44,30 @@ class MessageController extends Controller
             // Create the new channel if it doesnt exist
             $receivers_ids = $request->get('receivers_ids');
             $channelIsPrivate = $receivers_ids && sizeof($receivers_ids) === 1;
-            $channel = Channel::create([
-                'channel_type_id' => $channelIsPrivate ? ChannelType::PRIVATE_ID : ChannelType::PUBLIC_ID
-            ]);
-            // Subscribe the users to the channel
-            $sender->subscribeTo($channel);
-            if ( $receivers_ids ) {
-                foreach ($receivers_ids as $receiver_id) {
-                    User::find($receiver_id)->subscribeTo($channel);
+            if (
+                $channelIsPrivate
+                && $channelAlreadyExist = $sender->privateChannelWith( User::find($receiver_ids[0]) )
+            ) {
+                $channel = $channelAlreadyExist;
+            }
+            else {
+                $channel = Channel::create([
+                    'channel_type_id' => $channelIsPrivate ? ChannelType::PRIVATE_ID : ChannelType::PUBLIC_ID
+                ]);
+                // Subscribe the users to the channel
+                $sender->subscribeTo($channel);
+                if ( $receivers_ids ) {
+                    foreach ($receivers_ids as $receiver_id) {
+                        User::find($receiver_id)->subscribeTo($channel);
+                    }
                 }
             }
+
         }
 
-        $sender->sendMessage($channel, $request->get('text'));
+        $message = $sender->sendMessage($channel, $request->get('text'));
 
-        MessageSent::dispatch($channel);
+        MessageSent::dispatch($channel, $message);
 
         return response()->json(['success' => true]);
     }
@@ -69,6 +78,14 @@ class MessageController extends Controller
     public function show(Message $message)
     {
         //
+    }
+
+    /**
+     * Get additional info abou the channel.
+     */
+    public function getInfo(Message $message): array
+    {
+        return $message->getInfo();
     }
 
     /**

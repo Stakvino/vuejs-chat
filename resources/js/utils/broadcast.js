@@ -2,7 +2,7 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import axios from 'axios';
 
-export const initChatBroadcasting = channels => {
+export const initChatBroadcasting = () => {
     window.Pusher = Pusher;
 
     const laravelEcho = new Echo({
@@ -33,14 +33,6 @@ export const initChatBroadcasting = channels => {
             };
         },
     });
-    console.log(channels);
 
-    for (const channel of channels) {
-        console.log(channel.id);
-        laravelEcho.private(`chat-channel.${channel.id}`)
-        .listen('MessageSent', (e) => {
-            console.log(e, channel.id);
-        });
-    }
-
+    return laravelEcho;
 }

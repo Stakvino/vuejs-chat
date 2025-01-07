@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Channel;
+use App\Models\Message;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +23,8 @@ class UserController extends Controller
         $user = auth()->user();
         $user->avatar_path = $user->avatarPath();
         $user = $user->only([
-            'name', 'username', 'email', 'personal_color', 'email_verified_at', 'avatar_path'
+            'id', 'name', 'username', 'email', 'personal_color',
+            'email_verified_at', 'avatar_path'
         ]);
 
         return response()->json([
@@ -82,6 +85,22 @@ class UserController extends Controller
         $user->update($updateArray);
 
         return response()->json([ 'success' => true]);
+    }
+
+    /**
+     * Retrive and update necessery data after a MessageSent event dispatch is received in the front-end.
+     *
+     * @return Illuminate\Http\JsonResponse
+     */
+    function messageEventReceived(Channel $channel, Message $message, Request $request) : JsonResponse
+    {
+        $channel->scopeUnseenMessages()->update(['is_seen' => $request->get('userSawMessage')]);
+
+        return response()->json([
+            'success' => true,
+            'channelInfo' => $channel->getInfo(),
+            'messageInfo' => $message->getInfo()
+        ]);
     }
 
 }

@@ -8,8 +8,14 @@ defineProps(['user']);
 
 const isVisible = defineModel();
 const message = ref();
-const onMessageSend = () => {
-    console.log(message.value);
+const onMessageSubmit = () => {
+    const receivers_ids = [props.user.id];
+    axios.post('/api/messages', { 'text': message.value, 'receivers_ids': receivers_ids })
+    .then(response => {
+        if ( response.data['success'] ) {
+            message.value = '';
+        }
+    });
 }
 </script>
 
@@ -37,7 +43,7 @@ const onMessageSend = () => {
                 <p>{{ user.username }}</p>
             </div>
             <div class="flex gap-2 mt-8">
-                <form @submit.prevent="onMessageSend" class="w-full">
+                <form @submit.prevent="onMessageSubmit" class="w-full">
                     <div class="flex flex-col gap-1 mb-4">
                         <label for="message_input" class="font-semibold w-24">Message</label>
                         <Textarea v-model="message" id="message_input" rows="2" cols="30" />

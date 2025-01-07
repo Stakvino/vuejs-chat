@@ -53,7 +53,9 @@ class Message extends Model
      */
     public function sender(): User
     {
-        return $this->user()->select('name', 'personal_color', 'users.id')->first();
+        $sender = $this->user()->select('name', 'personal_color', 'users.id')->first();
+        $sender->avatar_path = $sender->avatarPath();
+        return $sender;
     }
 
     /**
@@ -85,6 +87,20 @@ class Message extends Model
     public function isSeenBy(User $user): bool
     {
         return $this->seens()->where('user_id', $user->id)->first()->is_seen;
+    }
+
+    /**
+     * Get the data neccessery for the front-end rendering of the message.
+     */
+    public function getInfo(): array
+    {
+        return [
+            'format_created_at' => $this->created_at->format('h:i'),
+            'isMyMessage' => $this->isMyMessage(),
+            'usersSeen' => $this->usersSeen(),
+            'isSeenByAuth' => $this->isSeenBy(auth()->user()),
+            'sender' => $this->sender(),
+        ];
     }
 
 }
