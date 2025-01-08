@@ -28,6 +28,9 @@ export const getLocalMoment = dateTime => {
 
 export const dateTimeFormat = dateTime => {
     const utcDate = moment.utc(dateTime);
+    if ( !utcDate.isValid() ) {
+        return "";
+    }
     const localDate = utcDate.local();
     const isSameDay = utcDate.isSame(moment.utc(), 'day');
     return isSameDay ? localDate.format('HH:mm') : localDate.format('DD/MMM/YY');

@@ -97,7 +97,8 @@ class Channel extends Model
         :
         [
             'name' => $this->name,
-            'avatar_path' => $this->icon
+            'avatar_path' => $this->icon,
+            'personal_color' => ''
         ];
 
         $lastMessage = $this->lastMessage();

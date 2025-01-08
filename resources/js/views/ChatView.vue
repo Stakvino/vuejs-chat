@@ -8,7 +8,10 @@ import ChatShow from '@/components/ChatShow/ChatShow.vue';
 import { initChatBroadcasting } from '@/utils/broadcast';
 import { useAuthStore } from '@/stores/useAuth';
 import { storeToRefs } from 'pinia';
+import { useModalStore } from '@/stores/useModal';
 
+const modalStore = useModalStore();
+const { isProfileModalVisible, isChannelModalVisible } = storeToRefs(modalStore);
 const authStore = useAuthStore();
 const { authUser } = storeToRefs(authStore);
 const { setContentIsReady } = useAppStore();
@@ -111,10 +114,6 @@ onMounted(async () => {
                     newMessage.info = response.data.messageInfo;
                     updatedChannel.info = response.data.channelInfo;
                     messageSentEventUpdate(updatedChannel, newMessage);
-                    if ( isSelectedChannel) {
-                        // Dispatch event so that other user knows this user saw the message
-                        // axios.put(`/api/channels/seen/${selectedChannel.value.id}`);
-                    }
                 }
             })
         });
@@ -149,7 +148,7 @@ onMounted(async () => {
 // Track the last message sent so that you can load more when the user scroll up
 const lastMessage = ref();
 const isScrolledToBottom = ref(false);
-const onChannelClick = async (event, channelId) => {
+const goToChannel = async channelId => {
     if (selectedChannel.value && channelId === selectedChannel.value.id) return;
     // Get messages of selected channel
     await axios.get(`/api/channels/messages/${channelId}`)
@@ -171,8 +170,8 @@ const onChannelClick = async (event, channelId) => {
             });
         }
     });
-
-};
+}
+const onChannelClick = (channelId) => goToChannel(channelId);
 
 const onChatShowMounted = () => {
 

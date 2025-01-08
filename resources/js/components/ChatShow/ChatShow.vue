@@ -86,9 +86,11 @@ const onMessageSubmit = () => {
 
         <PrivateChatHeader v-if="selectedChannel.isPrivate"
             :selectedChannel="selectedChannel"
+            :messageSentEventUpdate="messageSentEventUpdate"
         />
         <PublicChatHeader  v-else
             :selectedChannel="selectedChannel"
+            :messageSentEventUpdate="messageSentEventUpdate"
         />
 
         <div @scroll="onChatScroll" class="chat-messages-container relative p-2 max-h-full border" ref="chat-messages-container" >

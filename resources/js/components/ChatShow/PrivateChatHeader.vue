@@ -5,7 +5,7 @@ import { AutoComplete, Button, IconField, InputIcon, InputText, Menu } from 'pri
 import ShowProfile from '@/views/modals/ShowProfile.vue';
 import { dateTimeFormat } from '@/utils/helpers';
 
-const props = defineProps(['selectedChannel']);
+const props = defineProps(['selectedChannel', 'messageSentEventUpdate']);
 
 const searchInputShow = ref(false);
 const selectedCountry = ref();
@@ -53,7 +53,7 @@ const lastMessage = computed(() => {
 <template>
     <div class="bg-white p-2">
         <div class="flex justify-start items-center flex-1 gap-2">
-            <ShowProfile :user="senderProfile" v-model="showProfileIsVisible" />
+            <ShowProfile :user="senderProfile" v-model="showProfileIsVisible" :messageSentEventUpdate="messageSentEventUpdate" />
             <span class="flex justify-start items-center gap-2" @click="onShowProfile">
                 <div class="cursor-pointer min-w-10">
                     <div class="rounded-full w-12 h-12 bg-cover"

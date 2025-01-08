@@ -4,9 +4,14 @@ import { ref } from "vue";
 import { Avatar, Divider } from 'primevue';
 import axios from 'axios';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
+import { dateTimeFormat } from '../../utils/helpers';
+import { useModalStore } from '@/stores/useModal';
+import { storeToRefs } from 'pinia';
 
-defineProps(['channel']);
+defineProps(['channel', 'messageSentEventUpdate']);
 
+const modalStore = useModalStore();
+const { isProfileModalVisible } = storeToRefs(modalStore);
 const isVisible = defineModel();
 const message = ref();
 const selectedUser = ref();
@@ -15,7 +20,7 @@ const onShowProfile = user => {
     axios.get(`/api/users/profile/${user.id}`)
     .then(response => {
         selectedUser.value = response.data['user'];
-        showProfileIsVisible.value = true;
+        isProfileModalVisible.value = true;
     })
 }
 </script>
@@ -42,18 +47,18 @@ const onShowProfile = user => {
             <div class="flex flex-col gap-1 mb-4">
                 <label for="username" class="font-semibold w-24">Users</label>
                 <div class="h-52 overflow-y-auto border p-2 rounded">
-                    <ShowProfile :user="selectedUser" v-model="showProfileIsVisible" />
+                    <ShowProfile :user="selectedUser" v-model="isProfileModalVisible" :messageSentEventUpdate="messageSentEventUpdate" />
                     <div v-for="user of channel.users" @click="onShowProfile(user)" class="cursor-pointer">
-                        <div class="flex flex-1 items-center gap-2 w-8/12">
+                        <div class="flex flex-1 items-center gap-2 w-12/12">
                             <div class="rounded-full w-8 h-8 bg-cover"
                                 :style="{
                                 backgroundColor: user.personal_color,
                                 backgroundImage: `url(${user.avatar_path})`            }"
                             >
                             </div>
-                            <div class="flex flex-col max-w-full">
+                            <div class="flex flex-col flex-1">
                                 <span class="font-bold">{{ user.name }}</span>
-                                <p class="text-sm truncate w-10/12">Last login : {{ user.last_login_at }}</p>
+                                <p class="text-sm truncate w-10/12">Last login : {{ dateTimeFormat(user.last_login_at) }}</p>
                             </div>
                         </div>
                         <Divider class="my-2" />

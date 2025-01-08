@@ -8,10 +8,15 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-Broadcast::channel('chat-channel.{channel}', function (User $user, Channel $channel) {
+Broadcast::channel('chat-channel.{channel}', function (Channel $channel) {
     return $user->isSubscribedTo($channel);
 });
 
-Broadcast::channel('message-seen.{channel}', function (User $user, Channel $channel) {
+Broadcast::channel('channel-created.{user}', function (User $user) {
+    return $user->id === auth()->user()->id;
+});
+
+Broadcast::channel('message-seen.{channel}', function (Channel $channel) {
     return $user->isSubscribedTo($channel);
 });
+

@@ -20,9 +20,9 @@ const formatMessageCount = computed(() => {
     :key="channel.id"
     class="p-2 hover:bg-emphasis rounded border-b-4 transition-all duration-200 flex items-center justify-content-between cursor-pointer"
     :class="[{ 'selected-channel': selectedChannel?.id === channel.id }]"
-    @click="onChannelClick(event, channel.id)"
+    @click="onChannelClick(channel.id)"
 >
-    <div class="flex flex-1 items-center gap-2 w-10/12">
+    <div :class="channel" class="flex flex-1 items-center gap-2 w-10/12">
         <div class="rounded-full w-8 h-8 bg-cover"
             :style="
             {

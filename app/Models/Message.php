@@ -86,7 +86,8 @@ class Message extends Model
      */
     public function isSeenBy(User $user): bool
     {
-        return $this->seens()->where('user_id', $user->id)->first()->is_seen;
+        // #Stakvino
+        return $this->seens()->where('user_id', $user->id)->first()->is_seen ?? false;
     }
 
     /**

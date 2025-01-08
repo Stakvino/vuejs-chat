@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Events\MessageSent;
 use App\Models\ChannelType;
 use Illuminate\Http\Request;
+use App\Events\ChannelCreated;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Requests\UpdateMessageRequest;
@@ -53,6 +54,7 @@ class MessageController extends Controller
                 // Subscribe the users to the channel
                 $sender->subscribeTo($channel);
                 $receiver->subscribeTo($channel);
+                ChannelCreated::dispatch($channel);
             }
         }
 
