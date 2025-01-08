@@ -58,14 +58,15 @@ const lastMessage = computed(() => {
                 <div class="cursor-pointer min-w-10">
                     <div class="rounded-full w-12 h-12 bg-cover"
                         :style="{
-                        backgroundColor: receiver.personal_color,
-                        backgroundImage: `url(${receiver.avatar_path})`            }"
+                            backgroundColor: receiver.personal_color,
+                            backgroundImage: `url(${receiver.avatar_path})`
+                        }"
                     >
                     </div>
                 </div>
                 <div class="flex flex-col" v-if="!searchInputShow">
                     <span class="font-bold">{{ receiver.name }}</span>
-                    <span class="text-xs">Last login 11/08/2024</span>
+                    <span class="text-xs">Last seen {{ dateTimeFormat(receiver.last_login_at) }}</span>
                 </div>
             </span>
             <div v-if="searchInputShow" class="chat-search w-full flex justify-center">

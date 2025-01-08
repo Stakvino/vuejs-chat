@@ -6,7 +6,11 @@ import axios from 'axios';
 import ChatChannel from '@/components/ChatChannel/ChatChannel.vue';
 import ChatShow from '@/components/ChatShow/ChatShow.vue';
 import { initChatBroadcasting } from '@/utils/broadcast';
+import { useAuthStore } from '@/stores/useAuth';
+import { storeToRefs } from 'pinia';
 
+const authStore = useAuthStore();
+const { authUser } = storeToRefs(authStore);
 const { setContentIsReady } = useAppStore();
 const chatSearch = ref();
 
@@ -22,12 +26,12 @@ const allChannels = computed(() => {
 });
 
 // Update channel last message and time when user send message
-const updateChannel = (channelId, updatedChannel) => {
+const updateChannel = (updatedChannel) => {
     let channelHasBeenFound = false;
     // Loop over all types of channels (private, public, ...)
     for (const type of Object.keys(channels.value)) {
         channels.value[type].forEach((channel, index) => {
-            if (channel.id === channelId) {
+            if (channel.id === updatedChannel.id) {
                 channels.value[type][index] = updatedChannel;
                 channelHasBeenFound = true;
                 return;
@@ -46,6 +50,32 @@ const updateChannel = (channelId, updatedChannel) => {
 
 }
 
+// Update channel last message and time when user send message
+const updateMessages = (newMessage) => {
+    // Check if message has already been added
+    const messageAlreadyAdded = selectedChannel.value.messages.find(message => message.id === newMessage.id);
+    if ( !messageAlreadyAdded ) {
+        selectedChannel.value.messages.push(newMessage);
+    }
+    else {
+        // Replace old message with new if you have to ?
+    }
+}
+
+// Update the channel list and the messages listing after a MessageSent event is dispatched
+const messageSentEventUpdate = (updatedChannel, newMessage) => {
+    const isSelectedChannel = selectedChannel.value
+        && ( updatedChannel.id === selectedChannel.value.id )
+        ? true : false;
+
+    if ( isSelectedChannel ) {
+        updateMessages(newMessage);
+    }
+    updateChannel(updatedChannel);
+    isScrolledToBottom.value = false;
+
+}
+
 const channelsFetchError = ref(false);
 onMounted(async () => {
     await axios.get('/api/channels/')
@@ -60,39 +90,57 @@ onMounted(async () => {
 
     const laravelEcho = initChatBroadcasting();
     for (const channel of allChannels.value) {
+        // Listen to users sending messages
         laravelEcho.private(`chat-channel.${channel.id}`)
-        .listen('MessageSent', data => {
-            // Update messages listing
-            const newMessage = {
-                ...data.message,
-                // 'info': { ...data.messageInfo }
-            };
-            // Update channels listing
-            const updatedChannel = {
-                ...data.channel,
-                // 'info': { ...data.channelInfo }
-            };
+        .listen('MessageSent', async data => {
+            const newMessage = data.message;
+            const updatedChannel = data.channel;
 
             // if user is in the channel that received message and he is scrolled down
             // we will assume he saw the messages... for now
-            const isSelectedChannel = selectedChannel.value && channel.id === selectedChannel.value.id;
+            const isSelectedChannel = selectedChannel.value && ( channel.id === selectedChannel.value.id )
+                ? true : false;
+
             const userSawMessage = isSelectedChannel && isScrolledToBottom.value;
-            axios.put(`/api/users/message-event-received/${data.channel.id}/${data.message.id}`,
-            {
-                userSawMessage
-            })
+            axios.put(
+                `/api/users/message-event-received/${data.channel.id}/${data.message.id}`
+                , {userSawMessage: userSawMessage}
+            )
             .then(response => {
                 if (response.data.success) {
                     newMessage.info = response.data.messageInfo;
-                    if ( isSelectedChannel ) {
-                        selectedChannel.value.messages.push(newMessage);
-                    }
                     updatedChannel.info = response.data.channelInfo;
-                    updateChannel(channel.id, updatedChannel);
-                    isScrolledToBottom.value = false;
+                    messageSentEventUpdate(updatedChannel, newMessage);
+                    if ( isSelectedChannel) {
+                        // Dispatch event so that other user knows this user saw the message
+                        // axios.put(`/api/channels/seen/${selectedChannel.value.id}`);
+                    }
                 }
             })
         });
+
+        // Listen to users seeing your messages
+        laravelEcho.private(`message-seen.${channel.id}`)
+        .listen('MessageSeen', async data => {
+            const channel = data.channel;
+            const updatedMessagesIds = data.messagesIds;
+            const updatedMessages = await axios.get(
+                '/api/messages/get-messages'
+                , { params: {'messages-ids': updatedMessagesIds} }
+            )
+            .then(response => response.data);
+
+            if ( selectedChannel.value && channel.id === selectedChannel.value.id ) {
+                selectedChannel.value.messages = selectedChannel.value.messages.map(message => {
+                    if ( updatedMessages.find(updatedMessage => message.id === updatedMessage.id ) ) {
+                        const index = updatedMessages.findIndex(updatedMessage => message.id === updatedMessage.id )
+                        return updatedMessages[index];
+                    }
+                    return message;
+                });
+            }
+        });
+
     }
 
     setContentIsReady(true);
@@ -103,7 +151,7 @@ const lastMessage = ref();
 const isScrolledToBottom = ref(false);
 const onChannelClick = async (event, channelId) => {
     if (selectedChannel.value && channelId === selectedChannel.value.id) return;
-
+    // Get messages of selected channel
     await axios.get(`/api/channels/messages/${channelId}`)
     .then(response => {
         selectedChannel.value = response.data['channel'];
@@ -111,7 +159,9 @@ const onChannelClick = async (event, channelId) => {
     });
 
     // Update unseen messages count to zero when user enter channel chat
-    axios.put(`/api/channels/seen/${selectedChannel.value.id}`)
+    axios.put(`/api/channels/seen/${selectedChannel.value.id}`, {
+        'messagesIds':  selectedChannel.value.messages.map(message => message.id)
+    })
     .then(response => {
         if (response['data']['success']) {
             allChannels.value.forEach(channel => {
@@ -164,6 +214,7 @@ const onChatShowMounted = () => {
                         <ChatShow :selectedChannel="selectedChannel"
                             :onChatShowMounted="onChatShowMounted"
                             :isScrolledToBottom="isScrolledToBottom"
+                            :messageSentEventUpdate="messageSentEventUpdate"
                             @chat-scrolled-down="isScrolledToBottom = true"
                         />
                     </div>

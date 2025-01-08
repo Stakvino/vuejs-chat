@@ -6,8 +6,11 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Utils\Helpers;
 use App\Models\Channel;
+use App\Models\Message;
+use App\Events\MessageSeen;
 use App\Models\ChannelType;
 use Carbon\CarbonInterface;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\StoreChannelRequest;
 use App\Http\Requests\UpdateChannelRequest;
@@ -88,9 +91,11 @@ class ChannelController extends Controller
     /**
      * Update statut of message (from unseen to seen) when user enter channel to see messages.
      */
-    public function updateSeen(Channel $channel): JsonResponse
+    public function updateSeen(Channel $channel, Request $reauest): JsonResponse
     {
+        $unseenMessagesIds = $channel->scopeUnseenMessages()->select('messages.id')->get()->pluck('id');
         $channel->scopeUnseenMessages()->update(['is_seen' => true]);
+        MessageSeen::dispatch($channel, $unseenMessagesIds->toArray());
 
         return response()->json([
             'success' => true,

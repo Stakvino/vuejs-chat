@@ -76,8 +76,8 @@ class Message extends Model
         ->where('message_seens.message_id', $this->id)
         ->whereNot('users.id', auth()->user()->id)
         ->select(
-            'users.name', 'users.personal_color', 'users.id',
-            \DB::RAW('DATE_FORMAT(message_seens.created_at, "%d/%m/%Y %H:%i") as seen_created_at')
+            'users.name', 'users.personal_color', 'users.id', 'message_seens.created_at as seen_created_at'
+            // \DB::RAW('DATE_FORMAT(message_seens.created_at, "%d/%m/%Y %H:%i") as seen_created_at')
         )->get();
     }
 

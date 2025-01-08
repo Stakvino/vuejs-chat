@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->boolean('logged_in')->default(true);
+            $table->boolean('is_logged_in')->default(true);
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

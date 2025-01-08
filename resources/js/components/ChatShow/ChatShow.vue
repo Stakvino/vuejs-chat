@@ -8,8 +8,8 @@ import { throttle } from '@/utils/helpers';
 import PublicChatHeader from './PublicChatHeader.vue';
 import PrivateChatHeader from './PrivateChatHeader.vue';
 
-const props = defineProps(['selectedChannel', 'onChatShowMounted', 'isScrolledToBottom']);
-const emit = defineEmits(['chat-scrolled-down'])
+const props = defineProps(['selectedChannel', 'onChatShowMounted', 'isScrolledToBottom', 'messageSentEventUpdate']);
+const emit = defineEmits(['chat-scrolled-down', 'chat-scrolled-up'])
 
 const showChatScrollDownButton = ref(false);
 
@@ -71,10 +71,14 @@ const onMessageSubmit = () => {
     axios.post('/api/messages', { 'text': message.value, 'channel_id': channelId })
     .then(response => {
         if ( response.data['success'] ) {
+            const updatedChannel = response.data.channel;
+            const newMessage = response.data.message;
+            props.messageSentEventUpdate(updatedChannel, newMessage);
             message.value = '';
         }
     });
 }
+
 </script>
 
 <template>
@@ -89,7 +93,7 @@ const onMessageSubmit = () => {
 
         <div @scroll="onChatScroll" class="chat-messages-container relative p-2 max-h-full border" ref="chat-messages-container" >
             <div class="m-auto md:w-10/12 flex flex-col justify-end items-start">
-                <ShowProfile :user="senderProfile" v-model="showProfileIsVisible"  />
+                <ShowProfile :user="senderProfile" v-model="showProfileIsVisible" :messageSentEventUpdate="messageSentEventUpdate"  />
                 <ChatMessage v-for="message in selectedChannel.messages"
                     v-bind="message.info"
                     :message="message"

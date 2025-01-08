@@ -7,6 +7,7 @@ use App\Models\Channel;
 use App\Models\Message;
 use App\Events\MessageSent;
 use App\Models\ChannelType;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Requests\UpdateMessageRequest;
@@ -41,35 +42,32 @@ class MessageController extends Controller
             $channel = Channel::find($request->get('channel_id'));
         }
         else {
-            // Create the new channel if it doesnt exist
-            $receivers_ids = $request->get('receivers_ids');
-            $channelIsPrivate = $receivers_ids && sizeof($receivers_ids) === 1;
-            if (
-                $channelIsPrivate
-                && $channelAlreadyExist = $sender->privateChannelWith( User::find($receiver_ids[0]) )
-            ) {
+            // Create the new private channel if it doesnt exist
+            $receiver = User::find($request->get('receiver_id'));
+            $channelAlreadyExist = $sender->inChannelWith($receiver);
+            if ( $channelAlreadyExist ) {
                 $channel = $channelAlreadyExist;
             }
             else {
-                $channel = Channel::create([
-                    'channel_type_id' => $channelIsPrivate ? ChannelType::PRIVATE_ID : ChannelType::PUBLIC_ID
-                ]);
+                $channel = Channel::create(['channel_type_id' => ChannelType::PRIVATE_ID]);
                 // Subscribe the users to the channel
                 $sender->subscribeTo($channel);
-                if ( $receivers_ids ) {
-                    foreach ($receivers_ids as $receiver_id) {
-                        User::find($receiver_id)->subscribeTo($channel);
-                    }
-                }
+                $receiver->subscribeTo($channel);
             }
-
         }
 
         $message = $sender->sendMessage($channel, $request->get('text'));
 
         MessageSent::dispatch($channel, $message);
 
-        return response()->json(['success' => true]);
+        $channel->info = $channel->getInfo();
+        $message->info = $message->getInfo();
+
+        return response()->json([
+            'success' => true,
+            'channel' => $channel,
+            'message' => $message
+        ]);
     }
 
     /**
@@ -78,6 +76,22 @@ class MessageController extends Controller
     public function show(Message $message)
     {
         //
+    }
+
+    /**
+     * Get messages collection using Ids from the $request.
+     */
+    public function getMessages(Request $request): array
+    {
+        if ( !$request->get('messages-ids') ) return [];
+
+        $messages = Message::whereIn('id', $request->get('messages-ids'))->get()
+        ->map(function ($message) {
+            $message->info = $message->getInfo();
+            return $message;
+        })->toArray();
+
+        return $messages;
     }
 
     /**

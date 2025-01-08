@@ -3,16 +3,19 @@ import Dialog from 'primevue/dialog';
 import { ref, onMounted, watchEffect } from "vue";
 import { InputText, Button, Avatar, Message, Toast, Textarea } from 'primevue';
 import { useToast } from "primevue/usetoast";
+import axios from 'axios';
 
-defineProps(['user']);
+const props = defineProps(['user', 'messageSentEventUpdate']);
 
 const isVisible = defineModel();
 const message = ref();
 const onMessageSubmit = () => {
-    const receivers_ids = [props.user.id];
-    axios.post('/api/messages', { 'text': message.value, 'receivers_ids': receivers_ids })
+    axios.post('/api/messages', { 'text': message.value, 'receiver_id': props.user.id })
     .then(response => {
         if ( response.data['success'] ) {
+            const updatedChannel = response.data.channel;
+            const newMessage = response.data.message;
+            props.messageSentEventUpdate(updatedChannel, newMessage);
             message.value = '';
         }
     });

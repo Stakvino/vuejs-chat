@@ -52,4 +52,5 @@ Route::prefix('messages')->middleware(['auth:sanctum', 'verified'])->name('messa
 ->controller(MessageController::class)->group(function () {
     Route::post('/', 'store')->name('store');
     Route::get('getinfo/{message}', 'getInfo')->name('get-info');
+    Route::get('get-messages', 'getMessages')->name('get-messages');
 });

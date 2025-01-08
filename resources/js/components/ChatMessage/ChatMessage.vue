@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onUpdated, ref, watchEffect } from 'vue';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
 import { dateTimeFormat } from '@/utils/helpers';
 import { getLocalMoment } from '@/utils/helpers';
@@ -11,23 +11,27 @@ const props = defineProps(["message", "usersSeen", "isMyMessage", "sender", "mus
 const authStore = useAuthStore();
 const { authUser } = storeToRefs(authStore);
 
-const isSeen = props.usersSeen.length;
+const isSeen = computed(() => props.usersSeen.length);
 
 // if there is more than 2 subscribers in channel, show a message with a list of users
 // that saw the message when you hover the message time section
-const showSeenMessage = isSeen > 1;
-let seenByMessage = "";
-if (showSeenMessage) {
-    const maxUsersCount = 4;
-    seenByMessage = props.usersSeen.slice(0, maxUsersCount)
-        .map(userSeen => `${userSeen.name} - ${userSeen.seen_created_at}`)
-        .join("\n------\n");
-    if (props.usersSeen.length > maxUsersCount) {
-        seenByMessage += "\n...";
+const showSeenMessage = computed(() => isSeen.value >= 1);
+const seenByMessage = ref("");
+const computedSeenByMessage = computed(() => {
+    if (showSeenMessage.value) {
+        const maxUsersCount = 4;
+        seenByMessage.value = props.usersSeen.slice(0, maxUsersCount)
+            .map(userSeen => {
+                const dateTime = getLocalMoment(userSeen.seen_created_at).format('DD/MMM/YY HH:mm');
+                return `${userSeen.name} - ${dateTime}`;
+            })
+            .join("\n------\n");
+        if (props.usersSeen.length > maxUsersCount) {
+            seenByMessage.value += "\n...";
+        }
     }
-}
-
-// const isMyMessage = computed(() => props.sender.id === authUser.value.id);
+    return seenByMessage.value;
+});
 
 </script>
 
@@ -57,7 +61,7 @@ if (showSeenMessage) {
                 :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
                 v-tooltip.top="
                 isSeen ?
-                { value: seenByMessage, class: 'users-seen-tooltip' }
+                { value: computedSeenByMessage, class: 'users-seen-tooltip' }
                 : null"
             >
                 <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
@@ -129,7 +133,7 @@ if (showSeenMessage) {
     opacity: 0;
 }
 .users-seen-tooltip {
-    font-size: 14px;
+    font-size: 11px;
 }
 .message-time,
 .seen-icon {

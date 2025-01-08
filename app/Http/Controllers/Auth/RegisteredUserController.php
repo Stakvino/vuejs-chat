@@ -48,7 +48,8 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
-            'personal_color' => $personalColor
+            'personal_color' => $personalColor,
+            'last_login_at' => now()
         ]);
 
         // Subscribe the user automaticly to the public channel

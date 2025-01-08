@@ -37,7 +37,9 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
         'avatar',
         'email',
         'password',
-        'personal_color'
+        'personal_color',
+        'last_login_at',
+        'is_logged_in'
     ];
 
     /**
@@ -63,6 +65,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -166,11 +169,13 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
             'user_id' => $this->id,
         ]);
 
-        $messageSeens = $channel->members()->map(function($member) use($message) {
+        $now = now();
+        $messageSeens = $channel->members()->map(function($member) use($message, $now) {
             return [
                 'message_id' => $message->id,
                 'user_id' => $member->id,
-                'is_seen' => $member->id === $this->id ? true : false
+                'is_seen' => $member->id === $this->id ? true : false,
+                'created_at' => $now
             ];
         });
 

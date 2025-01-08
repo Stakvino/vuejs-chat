@@ -71,7 +71,7 @@ class Channel extends Model
     public function receivers(): Collection
     {
         $users = $this->users()->whereNot('users.id', auth()->user()->id)
-        ->select('name', 'personal_color', 'users.id')->get();
+        ->select('name', 'personal_color', 'users.id', 'last_login_at', 'is_logged_in')->get();
 
         return $users->map(function ($user) {
             $user->avatar_path = $user->avatarPath();

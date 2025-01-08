@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Channel;
 use App\Models\Message;
+use App\Events\MessageSeen;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -41,7 +42,7 @@ class UserController extends Controller
 
         $user->avatar_path = $user->avatarPath();
         $user = $user->only([
-            'name', 'username', 'personal_color', 'avatar_path'
+            'id', 'name', 'username', 'personal_color', 'avatar_path'
         ]);
 
         return response()->json([
@@ -94,7 +95,11 @@ class UserController extends Controller
      */
     function messageEventReceived(Channel $channel, Message $message, Request $request) : JsonResponse
     {
-        $channel->scopeUnseenMessages()->update(['is_seen' => $request->get('userSawMessage')]);
+        if ( $request->has('userSawMessage') ) {
+            $unseenMessagesIds = $channel->scopeUnseenMessages()->select('messages.id')->get()->pluck('id');
+            $channel->scopeUnseenMessages()->update(['is_seen' => $request->get('userSawMessage')]);
+            MessageSeen::dispatch($channel, $unseenMessagesIds->toArray());
+        }
 
         return response()->json([
             'success' => true,

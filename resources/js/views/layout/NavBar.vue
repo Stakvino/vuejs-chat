@@ -120,7 +120,7 @@ const toggleProfileMenu = (event) => {
                         <TieredMenu ref="profileMenu" id="profile_menu" :model="profileItems" popup />
                         <EditProfile v-model="editProfileIsVisible" />
                     </div>
-                    <div v-else-if="authFetchError" class="w-full m-2">
+                    <div v-else-if="isAuth && authFetchError" class="w-full m-2">
                         <Message class="w-full" severity="error" icon="pi pi-exclamation-circle">Server error</Message>
                     </div>
                     <div class="py-2" v-else>

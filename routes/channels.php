@@ -11,3 +11,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('chat-channel.{channel}', function (User $user, Channel $channel) {
     return $user->isSubscribedTo($channel);
 });
+
+Broadcast::channel('message-seen.{channel}', function (User $user, Channel $channel) {
+    return $user->isSubscribedTo($channel);
+});
