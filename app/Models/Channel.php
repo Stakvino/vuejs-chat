@@ -58,7 +58,7 @@ class Channel extends Model
      */
     public function members(): Collection
     {
-        return $this->users()->select('name', 'personal_color', 'users.id', 'last_login_at')
+        return $this->users()->select('name', 'personal_color', 'users.id', 'last_login_at', 'users.avatar')
                 ->get()->map(function($user){
                     $user->avatar_path = $user->avatarPath();
                     return $user;
@@ -71,7 +71,7 @@ class Channel extends Model
     public function receivers(): Collection
     {
         $users = $this->users()->whereNot('users.id', auth()->user()->id)
-        ->select('name', 'personal_color', 'users.id', 'last_login_at', 'is_logged_in')->get();
+        ->select('name', 'personal_color', 'users.id', 'last_login_at', 'is_logged_in', 'users.avatar')->get();
 
         return $users->map(function ($user) {
             $user->avatar_path = $user->avatarPath();
@@ -86,6 +86,25 @@ class Channel extends Model
     {
         return $this->messages()->join('message_seens as ms', 'ms.message_id', 'messages.id')
         ->where('ms.user_id', auth()->user()->id)->where('is_seen', false);
+    }
+
+    /**
+     * Get all channels.
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     */
+    public static function getAll(int $typeId = null): Collection
+    {
+        $channels = self::when($typeId, function ($q) use($typeId) {
+            return $q->where('channels.channel_type_id', $typeId);
+        })
+        ->get()->map(function ($channel) {
+            $channel->info = $channel->getInfo();
+            return $channel;
+        });
+
+        // Fix index changes because google chrome will change then back
+        return $channels->sortBy('updated_at')->values();
     }
 
     /**
@@ -127,17 +146,17 @@ class Channel extends Model
     /**
      * Get some of the most recent messages in this channel withh all the other data needed to render it on the fornt-end.
      */
-    public function getMessages(Int $messagesCount, string $fromDate = null) : Collection
+    public function getMessages(Int $messagesCount = null, string $fromDate = null) : Collection
     {
-        $query = $this->messages();
+        $query = $this->messages()->OrderBy('created_at', 'desc');
         if ( $fromDate ) {
-            $fromDate = date('d-m-Y H:i:s', strtotime($fromDate));
-            $query->where('created_at', '<=', $fromDate);
+            $query->where('created_at', '<', $fromDate);
         }
-        $messages = $query->OrderBy('created_at', 'desc')
-            ->take($messagesCount)->get()->reverse()->values();
+        if ( $messagesCount ) {
+            $query = $query->take($messagesCount);
+        }
 
-        return $messages->map(function($message) {
+        return $query->get()->reverse()->values()->map(function($message) {
             $message->info = $message->getInfo();
             return $message;
         });

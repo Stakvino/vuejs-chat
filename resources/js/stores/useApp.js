@@ -5,7 +5,8 @@ export const useAppStore = defineStore('app', {
     state: () => ({
         navIsReady: false,
         ContentIsReady: false,
-        currentRouteName: useRouter().currentRoute.value.name
+        currentRouteName: useRouter().currentRoute.value.name,
+        isMobileScreen: window.innerWidth < maxMobileScreenSize
     }),
     getters: {
         getPageIsLoading() { return !this.navIsReady || !this.ContentIsReady ; }
@@ -21,4 +22,11 @@ export const useAppStore = defineStore('app', {
         this.currentRouteName = currentRouteName;
       }
     },
-  })
+})
+
+const maxMobileScreenSize = 750;
+window.addEventListener('resize', e => {
+    return window.innerWidth < maxMobileScreenSize
+    ? useAppStore().isMobileScreen = true
+    : useAppStore().isMobileScreen = false;
+})

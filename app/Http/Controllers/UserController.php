@@ -14,6 +14,33 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+
+    /**
+     * Get all users except auth user.
+     *
+     * @return Illuminate\Http\JsonResponse
+     */
+    function getAllUsers(Request $request) : JsonResponse
+    {
+        $query = User::whereNot('id', auth()->user()->id);
+        if ( $request->get('user-search') ) {
+            $query->where('name', 'like', '%'. $request->get('user-search') .'%');
+        }
+        $users = $query->get()->map(function($user) {
+                $user->avatar_path = $user->avatarPath();
+                $user = $user->only([
+                    'id', 'name', 'username', 'email', 'personal_color',
+                    'email_verified_at', 'avatar_path', 'last_login_at'
+                ]);
+                return $user;
+            });
+
+        return response()->json([
+            'success' => true,
+            'users' => $users
+        ]);
+    }
+
     /**
      * Get the authetificiated user's infos as a JSON response.
      *
@@ -39,7 +66,6 @@ class UserController extends Controller
      */
     public function showProfile(User $user): JsonResponse
     {
-
         $user->avatar_path = $user->avatarPath();
         $user = $user->only([
             'id', 'name', 'username', 'personal_color', 'avatar_path'
@@ -98,7 +124,10 @@ class UserController extends Controller
         if ( $request->has('userSawMessage') ) {
             $unseenMessagesIds = $channel->scopeUnseenMessages()->select('messages.id')->get()->pluck('id');
             $channel->scopeUnseenMessages()->update(['is_seen' => $request->get('userSawMessage')]);
-            MessageSeen::dispatch($channel, $unseenMessagesIds->toArray());
+            $members = $channel->members();
+            foreach ($members as $member) {
+                MessageSeen::dispatch($member, $channel, $unseenMessagesIds->toArray());
+            }
         }
 
         return response()->json([

@@ -53,7 +53,7 @@ class Message extends Model
      */
     public function sender(): User
     {
-        $sender = $this->user()->select('name', 'personal_color', 'users.id')->first();
+        $sender = $this->user()->select('name', 'personal_color', 'users.id', 'users.avatar')->first();
         $sender->avatar_path = $sender->avatarPath();
         return $sender;
     }

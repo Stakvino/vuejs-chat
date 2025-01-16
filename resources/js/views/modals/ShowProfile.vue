@@ -8,7 +8,7 @@ import { useModalStore } from '@/stores/useModal';
 import { storeToRefs } from 'pinia';
 import axios from 'axios';
 
-const props = defineProps(['user', 'messageSentEventUpdate']);
+const props = defineProps(['user', 'messageSentEventUpdate', 'goToChannel']);
 
 const modalStore = useModalStore();
 const { isProfileModalVisible, isChannelModalVisible } = storeToRefs(modalStore);
@@ -27,7 +27,7 @@ const onMessageSubmit = () => {
             message.value = '';
             isChannelModalVisible.value = false;
             isProfileModalVisible.value = false;
-            goToChannel(updatedChannel.id);
+            props.goToChannel(updatedChannel.id);
         }
     });
 }

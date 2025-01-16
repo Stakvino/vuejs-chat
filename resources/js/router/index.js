@@ -111,14 +111,6 @@ axios.interceptors.response.use(
 );
 
 router.beforeEach(async (to, from) => {
-    /*
-    await axios.get("/sanctum/csrf-cookie")
-    await axios.get("/get-csrf")
-    .then(response => {
-        const token = response.data.token;
-        axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
-    });
-    */
     const authStore = useAuthStore();
     const { setIsAuth, fetchAuthUser, fetchAuthCheck } = authStore;
     const { isEmailVerified, isAuth, authCheckError, authFetchError } = storeToRefs(authStore);

@@ -6,11 +6,19 @@ export function throttle(fn, wait) {
         if(!throttled){
             fn.apply(this,args);
             throttled = true;
-            setTimeout(()=>{
+            setTimeout(() => {
                 throttled = false;
             }, wait);
         }
     }
+}
+
+export function debounce(func, timeout = 300){
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
 }
 
 export function primeVueFormStatesToData(states) {

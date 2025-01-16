@@ -54,13 +54,15 @@ class MessageController extends Controller
                 // Subscribe the users to the channel
                 $sender->subscribeTo($channel);
                 $receiver->subscribeTo($channel);
-                ChannelCreated::dispatch($channel);
             }
         }
 
         $message = $sender->sendMessage($channel, $request->get('text'));
 
-        MessageSent::dispatch($channel, $message);
+        $members = $channel->members();
+        foreach ($members as $member) {
+            MessageSent::dispatch($member, $channel, $message);
+        }
 
         $channel->info = $channel->getInfo();
         $message->info = $message->getInfo();

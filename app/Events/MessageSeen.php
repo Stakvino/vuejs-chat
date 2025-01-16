@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\User;
 use App\Models\Channel;
 use Illuminate\Support\Collection;
 use Illuminate\Queue\SerializesModels;
@@ -17,14 +18,16 @@ class MessageSeen implements ShouldBroadcast
 
     public $channel;
     public $messagesIds;
+    public $user;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Channel $channel, array $messagesIds)
+    public function __construct(User $user, Channel $channel, array $messagesIds)
     {
         $this->channel = $channel;
         $this->messagesIds = $messagesIds;
+        $this->user = $user;
     }
 
     /**
@@ -35,7 +38,7 @@ class MessageSeen implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('message-seen.' . $this->channel->id),
+            new PrivateChannel('message-seen.' . $this->user->id),
         ];
     }
 }

@@ -19,6 +19,18 @@ class ChannelController extends Controller
 {
 
     /**
+     * Get all public channels that user is not subscribed to.
+     */
+    public function getPublicChannels(): JsonResponse
+    {
+        $isSubscribed = false;
+        return response()->json([
+            'success' => true,
+            'channels' => auth()->user()->getChannels(ChannelType::PUBLIC_ID, $isSubscribed)
+        ]);
+    }
+
+    /**
      * Display a listing of the user's channels.
      */
     public function index(): JsonResponse
@@ -32,22 +44,6 @@ class ChannelController extends Controller
                 'private' => $user->getChannels(ChannelType::PRIVATE_ID)
             ]
         ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreChannelRequest $request)
-    {
-        //
     }
 
     /**
@@ -75,9 +71,12 @@ class ChannelController extends Controller
     /**
      * Display the channel's messages.
      */
-    public function getMessages(Channel $channel): JsonResponse
+    public function getMessages(Channel $channel, Request $request): JsonResponse
     {
-        $channel->messages = $channel->getMessages(10);
+        $messagesCount = $request->get('messages-count') ?? 10;
+        $fromDate = $request->get('from-date') ?? null;
+        $channel->messages = $channel->getMessages($messagesCount, $fromDate);
+        // $channel->messages = $channel->getMessages();
         $channel->receivers = $channel->receivers();
 
         $channel->isPrivate = $channel->isPrivate();
@@ -95,7 +94,10 @@ class ChannelController extends Controller
     {
         $unseenMessagesIds = $channel->scopeUnseenMessages()->select('messages.id')->get()->pluck('id');
         $channel->scopeUnseenMessages()->update(['is_seen' => true]);
-        MessageSeen::dispatch($channel, $unseenMessagesIds->toArray());
+        $members = $channel->members();
+        foreach ($members as $member) {
+            MessageSeen::dispatch($member, $channel, $unseenMessagesIds->toArray());
+        }
 
         return response()->json([
             'success' => true,
@@ -103,27 +105,31 @@ class ChannelController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     *  Subscribe user to channel
+     *
+     * @return Illuminate\Http\JsonResponse
      */
-    public function edit(Channel $channel)
+    public function subscribe(Channel $channel): JsonResponse
     {
-        //
+        $result = auth()->user()->subscribeTo($channel);
+
+        return response()->json([
+            'success' => $result,
+        ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     *  Unsubscribe user from channel
+     *
+     * @return Illuminate\Http\JsonResponse
      */
-    public function update(UpdateChannelRequest $request, Channel $channel)
+    public function unsubscribe(Channel $channel): JsonResponse
     {
-        //
-    }
+        $result = auth()->user()->unsubscribeFrom($channel);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Channel $channel)
-    {
-        //
+        return response()->json([
+            'success' => $result,
+        ]);
     }
 
 }

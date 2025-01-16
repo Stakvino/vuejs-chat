@@ -4,8 +4,19 @@ import { computed, onUpdated, ref } from 'vue';
 import { AutoComplete, Button, IconField, InputIcon, InputText, Menu } from 'primevue';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
 import { dateTimeFormat } from '@/utils/helpers';
+import { useModalStore } from '@/stores/useModal';
+import { storeToRefs } from 'pinia';
+import { useAppStore } from '@/stores/useApp';
 
-const props = defineProps(['selectedChannel', 'messageSentEventUpdate']);
+const props = defineProps(['selectedChannel', 'messageSentEventUpdate', 'goToChannel']);
+
+const showChannelsList = defineModel('showChannelsList');
+
+const modalStore = useModalStore();
+const { isProfileModalVisible } = storeToRefs(modalStore);
+
+const appStore = useAppStore();
+const { isMobileScreen } = storeToRefs(appStore);
 
 const searchInputShow = ref(false);
 const selectedCountry = ref();
@@ -17,7 +28,6 @@ const userOptionsMenuItems = ref([
         items: [
             { label: "Options" },
             { label: 'Block user', icon: 'pi pi-ban' },
-            { label: 'Delete chat', icon: 'pi pi-trash', }
         ]
     }
 ]);
@@ -35,12 +45,11 @@ const userChatSearch = (event) => {
 // The user that can send messages to auth in this channel
 const receiver = computed(() => props.selectedChannel.receivers[0]);
 const senderProfile = ref();
-const showProfileIsVisible = ref(false);
 const onShowProfile = () => {
     axios.get(`/api/users/profile/${receiver.value.id}`)
     .then(response => {
         senderProfile.value = response.data['user'];
-        showProfileIsVisible.value = true;
+        isProfileModalVisible.value = true;
     })
 }
 
@@ -53,11 +62,18 @@ const lastMessage = computed(() => {
 <template>
     <div class="bg-white p-2">
         <div class="flex justify-start items-center flex-1 gap-2">
-            <ShowProfile :user="senderProfile" v-model="showProfileIsVisible" :messageSentEventUpdate="messageSentEventUpdate" />
+            <div>
+                <Button v-if="isMobileScreen" @click="showChannelsList = true" icon="pi pi-arrow-left text-black text-sm" rounded aria-label="Back" raised />
+            </div>
+            <ShowProfile :user="senderProfile" v-model="isProfileModalVisible"
+                :messageSentEventUpdate="messageSentEventUpdate"
+                :goToChannel="goToChannel"
+            />
             <span class="flex justify-start items-center gap-2" @click="onShowProfile">
                 <div class="cursor-pointer min-w-10">
-                    <div class="rounded-full w-12 h-12 bg-cover"
+                    <div class="rounded-full w-12 h-12 bg-cover bg-center"
                         :style="{
+                            border: `#5dbea3 solid 1px`,
                             backgroundColor: receiver.personal_color,
                             backgroundImage: `url(${receiver.avatar_path})`
                         }"

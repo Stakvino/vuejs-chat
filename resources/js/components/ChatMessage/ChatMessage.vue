@@ -5,8 +5,12 @@ import { dateTimeFormat } from '@/utils/helpers';
 import { getLocalMoment } from '@/utils/helpers';
 import { useAuthStore } from '@/stores/useAuth';
 import { storeToRefs } from 'pinia';
+import { Divider } from 'primevue';
 
-const props = defineProps(["message", "usersSeen", "isMyMessage", "sender", "mustShowSender", "onShowProfile"])
+const props = defineProps([
+    "message", "usersSeen", "isMyMessage", "sender", "mustShowSender", "onShowProfile",
+    "dateDivider"
+])
 
 const authStore = useAuthStore();
 const { authUser } = storeToRefs(authStore);
@@ -36,40 +40,47 @@ const computedSeenByMessage = computed(() => {
 </script>
 
 <template>
-    <div class="flex justify-start items-start w-full" :class="isMyMessage ? 'flex-row-reverse' : null">
-        <div v-if="mustShowSender"
-            class="sender-avatar mx-1 mt-1"
-            :style="{backgroundColor: sender.personal_color}"
-            @click="onShowProfile(sender)"
-            v-tooltip.left="sender.name"
-        >
-            <div class="sender-avatar rounded-full w-full h-full bg-cover"
-                style="border: rgba(200,200,200,.9) solid 1px"
-                :style="
-                {
-                    backgroundColor: sender.personal_color,
-                    backgroundImage: `url(${sender.avatar_path})`
-                }"
-            >
+    <div class="chat-message-container w-full">
+        <Divider v-if="dateDivider" align="center" type="dotted">
+            <div class="date-divider-date">
+                {{ getLocalMoment(message.created_at).format('DD/MMM/YYYY') }}
             </div>
-        </div>
-        <div :class="isMyMessage ? 'my-message-container': 'others-message-container'">
-            <span>
-                {{ message.text }}
-            </span>
-            <span class="float-right message-info relative"
-                :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
-                v-tooltip.top="
-                isSeen ?
-                { value: computedSeenByMessage, class: 'users-seen-tooltip' }
-                : null"
+        </Divider>
+        <div class="flex justify-start items-start w-full" :class="isMyMessage ? 'flex-row-reverse' : null">
+            <div v-if="mustShowSender"
+                class="sender-avatar mx-1 mt-1"
+                :style="{backgroundColor: sender.personal_color}"
+                @click="onShowProfile(sender)"
+                v-tooltip.left="sender.name"
             >
-                <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
-                <span v-if="isMyMessage">
-                    <i class="pi pi-check seen-icon"></i>
-                    <i :class="{'hide': !isSeen}" class="pi pi-check seen-icon relative" style="right: 10px"></i>
+                <div class="sender-avatar rounded-full w-full h-full bg-cover bg-center"
+                    :style="
+                    {
+                        border: `#5dbea3 solid 1px`,
+                        backgroundColor: sender.personal_color,
+                        backgroundImage: `url(${sender.avatar_path})`
+                    }"
+                >
+                </div>
+            </div>
+            <div :class="isMyMessage ? 'my-message-container': 'others-message-container'">
+                <span>
+                    {{ message.text }}
                 </span>
-            </span>
+                <span class="float-right message-info relative"
+                    :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
+                    v-tooltip.top="
+                    isSeen ?
+                    { value: computedSeenByMessage, class: 'users-seen-tooltip' }
+                    : null"
+                >
+                    <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
+                    <span v-if="isMyMessage">
+                        <i class="pi pi-check seen-icon"></i>
+                        <i :class="{'hide': !isSeen}" class="pi pi-check seen-icon relative" style="right: 10px"></i>
+                    </span>
+                </span>
+            </div>
         </div>
     </div>
 </template>
@@ -139,4 +150,12 @@ const computedSeenByMessage = computed(() => {
 .seen-icon {
     font-size: 10px;
 }
+.p-divider-content {
+    background-color: rgba(220,220,200,1);
+    color: rgba(10,10,10,.8);
+    border-radius: 20px;
+    font-size: 12px;
+    padding: 0px 12px;
+}
+
 </style>

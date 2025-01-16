@@ -87,14 +87,21 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     }
 
     /**
-     * Get the channels the user is subscribed to.
+     * Get the channels of the user.
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
-    public function getChannels(int $typeId = null): Collection
+    public function getChannels(int $typeId = null, bool $isSubscribed = true): Collection
     {
-        $channels = $this->channels()
-        ->when($typeId, function ($q) use($typeId) {
+        $subscribedChannelsIds = $this->channels()->pluck('channels.id')->toArray();
+         if ( $isSubscribed ) {
+            $query = Channel::whereIn('id', $subscribedChannelsIds);
+         }
+         else {
+            $query = Channel::whereNotIn('id', $subscribedChannelsIds);
+         }
+
+        $channels = $query->when($typeId, function ($q) use($typeId) {
             return $q->where('channels.channel_type_id', $typeId);
         })
         ->get()->map(function ($channel) {
@@ -154,6 +161,19 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
             'user_id' => $this->id,
             'channel_id' => $channel->id
         ]);
+    }
+
+    /**
+     *  Unsubscribe user from channel
+     *
+     * @return bool
+     */
+    public function unsubscribeFrom(Channel $channel): bool
+    {
+        return ChannelUser::where([
+            'user_id' => $this->id,
+            'channel_id' => $channel->id
+        ])->delete();
     }
 
     /**

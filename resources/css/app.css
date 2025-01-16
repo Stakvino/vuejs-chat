@@ -76,7 +76,7 @@ a.p-button {
 .p-autocomplete.w-full input {
     width: 100%;
 }
-.p-divider {
+.p-divider::before {
     border: rgba(200, 200, 200, .5) solid 1px;
 }
 

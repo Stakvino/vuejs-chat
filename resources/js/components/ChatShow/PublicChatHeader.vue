@@ -1,13 +1,19 @@
 <script setup>
 import axios from 'axios';
 import { computed, ref } from 'vue';
-import { AutoComplete, Button, IconField, InputIcon, InputText, Menu } from 'primevue';
+import { AutoComplete, Button, ConfirmDialog, IconField, InputIcon, InputText, Menu, Toast, useConfirm, useToast } from 'primevue';
 import ShowChannel from '@/views/modals/ShowChannel.vue';
 import { dateTimeFormat } from '@/utils/helpers';
 import { useModalStore } from '@/stores/useModal';
 import { storeToRefs } from 'pinia';
+import { useAppStore } from '@/stores/useApp';
 
-const props = defineProps(['selectedChannel', 'messageSentEventUpdate']);
+const props = defineProps(['selectedChannel', 'messageSentEventUpdate', 'goToChannel', 'deleteChannel']);
+
+const showChannelsList = defineModel('showChannelsList');
+
+const appStore = useAppStore();
+const { isMobileScreen } = storeToRefs(appStore);
 
 const modalStore = useModalStore();
 const { isChannelModalVisible } = storeToRefs(modalStore);
@@ -16,12 +22,48 @@ const selectedCountry = ref();
 const filteredCountries = ref();
 const userOptionsMenu = ref();
 
+const confirm = useConfirm();
+
+const leaveChannelConfirm = () => {
+    confirm.require({
+        message: 'Are you sure you want to leave this channel ?',
+        header: 'Confirmation',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true,
+            class: 'action-button !rounded py-1 px-3 w-20'
+        },
+        acceptProps: {
+            label: 'Leave',
+            class: 'error-button rounded py-1 px-3 w-20'
+        },
+        accept: () => {
+            axios.delete(`/api/channels/unsubscribe/${props.selectedChannel.id}`)
+            .then(response => {
+                if ( response.data.success ) {
+                    props.deleteChannel(props.selectedChannel.id);
+                }
+            })
+        },
+        reject: () => {
+
+        }
+    });
+}
+
 const userOptionsMenuItems = ref([
     {
         items: [
             { label: "Options" },
-            { label: 'Block user', icon: 'pi pi-ban' },
-            { label: 'Delete chat', icon: 'pi pi-trash', }
+            {
+                label: 'Leave channel',
+                icon: 'pi pi-ban',
+                command: () => {
+                    leaveChannelConfirm();
+                }
+            },
         ]
     }
 ]);
@@ -57,7 +99,13 @@ const lastMessage = computed(() => {
 <template>
     <div class="bg-white p-2">
         <div class="flex justify-start items-center flex-1 gap-2">
-            <ShowChannel :channel="channel" v-model="isChannelModalVisible" :messageSentEventUpdate="messageSentEventUpdate" />
+            <div>
+                <Button v-if="isMobileScreen" @click="showChannelsList = true" icon="pi pi-arrow-left text-black text-sm" rounded aria-label="Back" raised />
+            </div>
+            <ShowChannel :channel="channel" v-model="isChannelModalVisible"
+                :messageSentEventUpdate="messageSentEventUpdate"
+                :goToChannel="goToChannel"
+            />
             <span @click="onShowChannel" class="flex justify-start items-center gap-2">
                 <div class="cursor-pointer min-w-10">
                     <div class="rounded-full w-12 h-12 bg-cover"
@@ -93,5 +141,6 @@ const lastMessage = computed(() => {
                 <Menu ref="userOptionsMenu" id="user_options_menu" :model="userOptionsMenuItems" :popup="true" />
             </div>
         </div>
+        <ConfirmDialog></ConfirmDialog>
     </div>
 </template>

@@ -4,7 +4,7 @@ import { dateTimeFormat } from '@/utils/helpers';
 import { computed } from 'vue';
 
 const props = defineProps([
-    'channel', 'onChannelClick', 'selectedChannel', 'unseenMessagesCount'
+    'channel', 'onChannelClick', 'selectedChannel', 'unseenMessagesCount', 'showInfo'
 ]);
 
 const formatMessageCount = computed(() => {
@@ -18,14 +18,15 @@ const formatMessageCount = computed(() => {
 <template>
 <li
     :key="channel.id"
-    class="p-2 hover:bg-emphasis rounded border-b-4 transition-all duration-200 flex items-center justify-content-between cursor-pointer"
+    class="p-2 hover:bg-emphasis border-b-4 transition-all duration-200 flex items-start justify-content-between cursor-pointer"
     :class="[{ 'selected-channel': selectedChannel?.id === channel.id }]"
     @click="onChannelClick(channel.id)"
 >
     <div :class="channel" class="flex flex-1 items-center gap-2 w-10/12">
-        <div class="rounded-full w-8 h-8 bg-cover"
+        <div class="rounded-full w-8 h-8 bg-cover bg-center"
             :style="
             {
+                border: `#5dbea3 solid 1px`,
                 backgroundColor: channel.info.receiver.personal_color,
                 backgroundImage: `url(${channel.info.receiver.avatar_path})`
             }"
@@ -33,14 +34,14 @@ const formatMessageCount = computed(() => {
         </div>
         <div class="flex flex-col max-w-full" style="width: calc(100% - 40px);">
             <span class="font-bold">{{ channel.info.receiver.name }}</span>
-            <p v-if="channel.info.lastMessage" class="text-sm truncate">{{ channel.info.lastMessage.text }}</p>
+            <p v-if="channel.info.lastMessage && showInfo" class="text-sm truncate">{{ channel.info.lastMessage.text }}</p>
         </div>
     </div>
     <div class="flex flex-col items-end h-full w-2/12">
-        <div v-if="channel.info.lastMessage" class="message-date text-xs">
+        <div v-if="channel.info.lastMessage && showInfo" class="message-date text-xs">
             {{ dateTimeFormat(channel.info.lastMessage.created_at) }}
         </div>
-        <div v-if="channel.info.unseenMessagesCount > 0" class="new-messages-count">
+        <div v-if="channel.info.unseenMessagesCount > 0 && showInfo" class="new-messages-count">
             <Badge
                 :value="formatMessageCount"
                 severity="secondary" size="small"
@@ -55,7 +56,7 @@ const formatMessageCount = computed(() => {
 .selected-channel {
     background-color: #a881af !important;
     color: white;
-    border-radius: 6px;
+    border-radius: 4px;
 }
 .selected-channel:hover {
     color: white;

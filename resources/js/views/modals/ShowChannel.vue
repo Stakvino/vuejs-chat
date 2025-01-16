@@ -1,17 +1,17 @@
 <script setup>
 import Dialog from 'primevue/dialog';
 import { ref } from "vue";
-import { Avatar, Divider } from 'primevue';
+import { Avatar, Button, Divider } from 'primevue';
 import axios from 'axios';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
 import { dateTimeFormat } from '../../utils/helpers';
 import { useModalStore } from '@/stores/useModal';
 import { storeToRefs } from 'pinia';
 
-defineProps(['channel', 'messageSentEventUpdate']);
+const props = defineProps(['channel', 'messageSentEventUpdate', 'goToChannel', 'isSubscribed', 'loadUserChannels']);
 
 const modalStore = useModalStore();
-const { isProfileModalVisible } = storeToRefs(modalStore);
+const { isProfileModalVisible, isChannelModalVisible } = storeToRefs(modalStore);
 const isVisible = defineModel();
 const message = ref();
 const selectedUser = ref();
@@ -23,6 +23,18 @@ const onShowProfile = user => {
         isProfileModalVisible.value = true;
     })
 }
+
+const onJoinChannelClick = () => {
+    axios.post(`/api/channels/subscribe/${props.channel.id}`)
+    .then(async response => {
+        if ( response.data.success ) {
+            await props.loadUserChannels();
+            isChannelModalVisible.value = false;
+            props.goToChannel(props.channel.id);
+        }
+    })
+}
+
 </script>
 
 <template>
@@ -47,13 +59,18 @@ const onShowProfile = user => {
             <div class="flex flex-col gap-1 mb-4">
                 <label for="username" class="font-semibold w-24">Users</label>
                 <div class="h-52 overflow-y-auto border p-2 rounded">
-                    <ShowProfile :user="selectedUser" v-model="isProfileModalVisible" :messageSentEventUpdate="messageSentEventUpdate" />
+                    <ShowProfile :user="selectedUser" v-model="isProfileModalVisible"
+                        :messageSentEventUpdate="messageSentEventUpdate"
+                        :goToChannel="goToChannel"
+                    />
                     <div v-for="user of channel.users" @click="onShowProfile(user)" class="cursor-pointer">
                         <div class="flex flex-1 items-center gap-2 w-12/12">
-                            <div class="rounded-full w-8 h-8 bg-cover"
+                            <div class="rounded-full w-8 h-8 bg-cover bg-center"
                                 :style="{
-                                backgroundColor: user.personal_color,
-                                backgroundImage: `url(${user.avatar_path})`            }"
+                                    border: `#5dbea3 solid 1px`,
+                                    backgroundColor: user.personal_color,
+                                    backgroundImage: `url(${user.avatar_path})`
+                                }"
                             >
                             </div>
                             <div class="flex flex-col flex-1">
@@ -64,6 +81,9 @@ const onShowProfile = user => {
                         <Divider class="my-2" />
                     </div>
                 </div>
+            </div>
+            <div v-if="!isSubscribed" class="my-3 flex justify-end">
+                <Button @click="onJoinChannelClick" class="action-button py-2 px-4">Join Channel</Button>
             </div>
         </Dialog>
     </div>
