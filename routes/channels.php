@@ -17,7 +17,7 @@ Broadcast::channel('message-seen.{user}', function (User $user) {
     return $user->id === auth()->user()->id;
 });
 
-Broadcast::channel('channel-created.{user}', function (User $user) {
+Broadcast::channel('user-writing.{user}', function (User $user) {
     return $user->id === auth()->user()->id;
 });
 

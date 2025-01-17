@@ -110,7 +110,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
         });
 
         // Fix index changes because google chrome will change then back
-        return $channels->sortBy('updated_at')->values();
+        return $channels->sortByDesc('updated_at')->values();
     }
 
     /**

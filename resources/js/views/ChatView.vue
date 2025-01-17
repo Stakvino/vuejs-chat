@@ -112,9 +112,10 @@ const loadUserChannels = async () => {
     });
 }
 
+const usersTypingIds = ref([]);
 onMounted(async () => {
     await loadUserChannels();
-    /*
+
     const laravelEcho = initChatBroadcasting();
     // Listen to users sending messages
     laravelEcho.private(`chat-channel.${authUser.value.id}`)
@@ -137,6 +138,9 @@ onMounted(async () => {
                 newMessage.info = response.data.messageInfo;
                 updatedChannel.info = response.data.channelInfo;
                 messageSentEventUpdate(updatedChannel, newMessage);
+                if (!isSelectedChannel && newMessage.info.sender.id !== authUser.value.id) {
+                    messageReceivedAudio.value.play();
+                }
             }
         })
     });
@@ -152,17 +156,47 @@ onMounted(async () => {
         )
         .then(response => response.data);
 
-        if ( selectedChannel.value && channel.id === selectedChannel.value.id ) {
+        const channelIsSelected = selectedChannel.value && channel.id === selectedChannel.value.id;
+        if ( channelIsSelected ) {
+            let lastMessageUpdated = null;
             selectedChannel.value.messages = selectedChannel.value.messages.map(message => {
-                if ( updatedMessages.find(updatedMessage => message.id === updatedMessage.id ) ) {
+                const messageHasBeenUpdated = updatedMessages.find(updatedMessage => message.id === updatedMessage.id );
+                // if message has been updated, replace old message with updatedMessage
+                if ( messageHasBeenUpdated ) {
                     const index = updatedMessages.findIndex(updatedMessage => message.id === updatedMessage.id )
+                    lastMessageUpdated = updatedMessages[index];
                     return updatedMessages[index];
                 }
+                // otherwise just return the message as it is
                 return message;
             });
+
+            const messageWasSentByAuth = lastMessageUpdated && lastMessageUpdated.info.sender.id === authUser.value.id;
+            const messageWasSeenByOthers = lastMessageUpdated && lastMessageUpdated.info.usersSeen.length;
+            if ( messageSeenAudio.value && messageWasSentByAuth && messageWasSeenByOthers && channelIsSelected ) {
+                messageSeenAudio.value.play();
+            }
+
         }
     });
-*/
+
+    // Listen to users sending messages
+    laravelEcho.private(`user-writing.${authUser.value.id}`)
+    .listen('UserWriting', data => {
+        // user stoped typing
+        if ( !data.isWriting ) {
+            const index = usersTypingIds.value.indexOf(data.userTypingId);
+            usersTypingIds.value.splice(index, 1);
+            return;
+        }
+        // user started typing
+        const idNotInArray = usersTypingIds.value.indexOf(data.userTypingId) === -1;
+        if ( data.userTypingId !== authUser.value.id && idNotInArray ) {
+            usersTypingIds.value.unshift(data.userTypingId);
+        }
+        const maxUsersToShow = 10;
+        usersTypingIds.value = usersTypingIds.value.slice(0, maxUsersToShow)
+    })
 
     setContentIsReady(true);
 })
@@ -259,6 +293,11 @@ const userIsSubscribed = channelId => {
     }
     return false;
 }
+
+
+const messageReceivedAudio = useTemplateRef('message-received-audio');
+const messageSeenAudio = useTemplateRef('message-seen-audio');
+const isWritingAudio = useTemplateRef('is-writing-audio');
 
 </script>
 
@@ -369,12 +408,17 @@ const userIsSubscribed = channelId => {
                             @chat-scrolled-down="isScrolledToBottom = true"
                             :goToChannel="goToChannel"
                             :deleteChannel="deleteChannel"
+                            :usersTypingIds="usersTypingIds"
                             v-model:showChannelsList="showChannelsList"
                         />
                     </div>
                 </div>
             </div>
        </div>
+
+       <audio ref="message-received-audio" src="/audio/message-received.wav"></audio>
+       <audio class="hidden" ref="message-seen-audio" src="/audio/message-seen.wav"></audio>
+       <audio class="hidden" ref="is-writing-audio" src="/audio/is-writing.wav"></audio>
     </div>
 </template>
 

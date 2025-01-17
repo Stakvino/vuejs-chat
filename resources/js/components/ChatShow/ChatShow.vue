@@ -12,7 +12,8 @@ import { storeToRefs } from 'pinia';
 import { getLocalMoment } from '../../utils/helpers';
 
 const props = defineProps([
-    'selectedChannel', 'isScrolledToBottom', 'messageSentEventUpdate','goToChannel', 'deleteChannel'
+    'selectedChannel', 'isScrolledToBottom', 'messageSentEventUpdate','goToChannel',
+    'deleteChannel', 'usersTypingIds'
 ]);
 const emit = defineEmits(['chat-scrolled-down', 'chat-scrolled-up'])
 
@@ -136,6 +137,30 @@ const dateDivider = (message, messages) => {
     return currentMessageDay !== previousMessageDay;
 }
 
+let userIsWriting = false;
+const onMessageInput = () => {
+
+    if ( !userIsWriting && message.value.trim() ) {
+        userIsWriting = true;
+        axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, {'is-writing': true})
+        // if input has something for 20 seconds remove the "user is writing animation"
+        const timeout = 60000;
+        setTimeout(() => {
+            axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, {'is-writing': false})
+        }, timeout);
+    }
+
+    if ( !message.value.trim() ) {
+        axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, {'is-writing': false})
+        .then(response => {
+            if (response.data.success) {
+                userIsWriting = false;
+            }
+        });
+    }
+
+}
+
 </script>
 
 <template>
@@ -178,12 +203,34 @@ const dateDivider = (message, messages) => {
             </div>
             <Button class="chat-scrolldown-button sticky" @click="onChatScrollButtonCLick" v-if="showChatScrollDownButton" severity="secondary" icon="pi pi-arrow-down" raised rounded />
 
+            <div class="absolute flex justify-start items-end" style="bottom: 5px;">
+                <div style="opacity: 0; width: 22px; height: 22px"></div>
+                <div v-for="userId in usersTypingIds">
+                    <div v-if="selectedChannel.receivers.find(receiver => receiver.id === userId)"
+                            class="relative sender-avatar rounded-full bg-cover bg-center"
+                            style="border: #5dbea3 solid 1px; width: 22px; height: 22px"
+                            :style="
+                            {
+                                left: `${usersTypingIds.indexOf(userId) * -8}px`,
+                                backgroundColor: selectedChannel.receivers.find(receiver => receiver.id === userId).personal_color,
+                                backgroundImage: `url(${selectedChannel.receivers.find(receiver => receiver.id === userId).avatar_path})`
+                            }"
+                        >
+                    </div>
+                </div>
+                <img :style="{ left: `${(usersTypingIds.length) * -8}px` }"
+                    :class="{'opacity-0': !usersTypingIds.length}" class="relative"
+                    style="background-color: rgba(255,255,255,.5); border-radius: 6px; height: 15px"
+                    src="/images/chat/is-typing.gif" width="35" alt="user is typing"
+                >
+            </div>
+
         </div>
 
         <div class="mt-2 mx-auto w-11/12 md:w-10/12 sending-message-input bg-white">
             <form @submit.prevent="onMessageSubmit">
                 <IconField class="w-full">
-                    <InputText autofocus class="w-full" v-model="message" placeholder="Message" />
+                    <InputText @input="onMessageInput" autofocus class="w-full" v-model="message" placeholder="Message" />
                     <InputIcon class="pi pi-send text-xl" />
                 </IconField>
             </form>

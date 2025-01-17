@@ -55,6 +55,7 @@ Route::prefix('channels')->middleware(['auth:sanctum', 'verified'])->name('chann
 Route::prefix('messages')->middleware(['auth:sanctum', 'verified'])->name('messages.')
 ->controller(MessageController::class)->group(function () {
     Route::post('/', 'store')->name('store');
+    Route::post('/user-is-writing/{channel}', 'userIsWriting')->name('user-is-writing');
     Route::get('getinfo/{message}', 'getInfo')->name('get-info');
     Route::get('get-messages', 'getMessages')->name('get-messages');
 });

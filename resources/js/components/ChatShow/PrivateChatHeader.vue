@@ -100,10 +100,12 @@ const lastMessage = computed(() => {
             <div class="ml-auto" v-if="searchInputShow" @click="searchInputShow = false">
                 <Button style="color: black;" icon="pi pi-times" aria-label="Close search" />
             </div>
+            <!--
             <div class="ml-auto" v-if="!searchInputShow" @click="searchInputShow = true">
                 <Button style="color: black;" icon="pi pi-search" aria-label="Search in chat" />
             </div>
-            <div class="">
+            -->
+            <div class="ml-auto">
                 <Button class="three-dots-btn" type="button" icon="pi pi-ellipsis-v" @click="toggleUserOptionsMenu" size="large" aria-haspopup="true" aria-controls="user_options_menu" />
                 <Menu ref="userOptionsMenu" id="user_options_menu" :model="userOptionsMenuItems" :popup="true" />
             </div>
