@@ -97,7 +97,8 @@ const messageSentEventUpdate = (updatedChannel, newMessage) => {
 }
 
 const channelsFetchError = ref(false);
-const allUsers = ref();
+const usersList = ref();
+const blockedUsers = ref();
 const allPublicChannels = ref();
 
 const loadUserChannels = async () => {
@@ -112,7 +113,7 @@ const loadUserChannels = async () => {
     });
 }
 
-const usersTypingIds = ref([]);
+const usersTypingIds = ref({});
 onMounted(async () => {
     await loadUserChannels();
 
@@ -183,19 +184,31 @@ onMounted(async () => {
     // Listen to users sending messages
     laravelEcho.private(`user-writing.${authUser.value.id}`)
     .listen('UserWriting', data => {
-        // user stoped typing
+        // if its me typing you dont have to show it
+        if ( authUser.value.id === data.userTypingId ) return;
+
+        // Add channel if its not there
+        if ( !usersTypingIds.value[data.channel.id] ) {
+            usersTypingIds.value[data.channel.id] = [];
+        }
+
+        const channelUsersIds = usersTypingIds.value[data.channel.id];
+        // User started writing
+        if ( data.isWriting && channelUsersIds.indexOf(data.userTypingId) === -1 ) {
+            usersTypingIds.value[data.channel.id].unshift(data.userTypingId);
+            const channelIsSelected = selectedChannel.value && data.channel.id === selectedChannel.value.id;
+            if ( channelIsSelected ) {
+                isWritingAudio.value.play();
+            }
+        }
+        // User stoped writing
         if ( !data.isWriting ) {
-            const index = usersTypingIds.value.indexOf(data.userTypingId);
-            usersTypingIds.value.splice(index, 1);
-            return;
+            const index = channelUsersIds.indexOf(data.userTypingId);
+            usersTypingIds.value[data.channel.id].splice(index, 1);
         }
-        // user started typing
-        const idNotInArray = usersTypingIds.value.indexOf(data.userTypingId) === -1;
-        if ( data.userTypingId !== authUser.value.id && idNotInArray ) {
-            usersTypingIds.value.unshift(data.userTypingId);
-        }
+
         const maxUsersToShow = 10;
-        usersTypingIds.value = usersTypingIds.value.slice(0, maxUsersToShow)
+        usersTypingIds.value[data.channel.id] = channelUsersIds.slice(0, maxUsersToShow)
     })
 
     setContentIsReady(true);
@@ -250,14 +263,15 @@ const onShowProfile = user => {
     })
 }
 
-const onUsersTabClick = () => {
+const fetchUserslist = () => {
     axios.get('/api/users/all')
     .then(response => {
-        allUsers.value = response.data.users;
+        usersList.value = response.data.users;
+        blockedUsers.value = response.data['blocked-users'];
     });
 }
 
-const onChannelsTabClick = () => {
+const fetchPublicChannels = () => {
     axios.get('/api/channels/public')
     .then(response => {
         allPublicChannels.value = response.data.channels;
@@ -265,12 +279,13 @@ const onChannelsTabClick = () => {
 }
 
 const selectedTab = ref("0");
+const selectedUserTab = ref('0');
 const userSearch = ref();
 const onUserSearchInput = debounce(
     () => {
         axios.get('/api/users/all', { params: {"user-search": userSearch.value} })
         .then(response => {
-            allUsers.value = response.data.users;
+            usersList.value = response.data.users;
         })
     }
 );
@@ -313,13 +328,13 @@ const isWritingAudio = useTemplateRef('is-writing-audio');
             <div class="w-full h-full">
                 <Tabs v-model:value="selectedTab">
                     <TabList>
-                        <Tab class="w-4/12" value="0">
+                        <Tab class="w-4/12" value="0" @click="loadUserChannels">
                             <i class="pi pi-inbox"></i> <span class="ml-3">Messages</span>
                         </Tab>
-                        <Tab class="w-4/12" value="1" @click="onUsersTabClick">
+                        <Tab class="w-4/12" value="1" @click="fetchUserslist">
                             <i class="pi pi-user"></i>  <span class="ml-3">Users</span>
                         </Tab>
-                        <Tab class="w-4/12" value="2" @click="onChannelsTabClick">
+                        <Tab class="w-4/12" value="2" @click="fetchPublicChannels">
                             <i class="pi pi-globe"></i>  <span class="ml-3">Channels</span>
                         </Tab>
                     </TabList>
@@ -335,12 +350,14 @@ const isWritingAudio = useTemplateRef('is-writing-audio');
                                         :channel="channel" :selectedChannel="selectedChannel"
                                         :onChannelClick="onChannelClick"
                                         :goToChannel="goToChannel"
+                                        :usersTypingIds="usersTypingIds"
                                         :showInfo="true"
                                     />
                                     <ChatChannel v-if="channels" v-for="channel in channels.private"
                                         :channel="channel" :selectedChannel="selectedChannel"
                                         :onChannelClick="onChannelClick"
                                         :goToChannel="goToChannel"
+                                        :usersTypingIds="usersTypingIds"
                                         :showInfo="true"
                                     />
                                 </ul>
@@ -349,30 +366,71 @@ const isWritingAudio = useTemplateRef('is-writing-audio');
                         </TabPanel>
                         <TabPanel value="1" class="p-2" style="height: calc(100vh - 150px) ;overflow-y:auto">
                             <div class="border-surface rounded">
-                                <div>
-                                    <InputText class="!py-1 !px-3 w-full mb-2" placeholder="Find a user" type="text" v-model="userSearch" @input="onUserSearchInput" />
-                                </div>
-                                <ShowProfile :user="selectedUser" v-model="isProfileModalVisible"
-                                    :messageSentEventUpdate="messageSentEventUpdate"
-                                    :goToChannel="goToChannel"
-                                />
-                                <div v-for="user of allUsers" @click="onShowProfile(user)" class="cursor-pointer hover:bg-emphasis rounded transition-all duration-200">
-                                    <div class="flex flex-1 items-center gap-2 w-12/12 p-3">
-                                        <div class="rounded-full w-8 h-8 bg-cover bg-center"
-                                            :style="{
-                                                border: `#5dbea3 solid 1px`,
-                                                backgroundColor: user.personal_color,
-                                                backgroundImage: `url(${user.avatar_path})`
-                                            }"
-                                        >
-                                        </div>
-                                        <div class="flex flex-col flex-1">
-                                            <span class="font-bold">{{ user.name }}</span>
-                                            <p class="text-sm truncate w-10/12">Last login : {{ dateTimeFormat(user.last_login_at) }}</p>
-                                        </div>
-                                    </div>
-                                    <Divider class="my-0" />
-                                </div>
+                                <Tabs v-model:value="selectedUserTab">
+                                    <TabList>
+                                        <Tab class="w-6/12 secondary" value="0" @click="fetchUserslist">
+                                            <i class="pi pi-list"></i> <span class="ml-3">List</span>
+                                        </Tab>
+                                        <Tab class="w-6/12 danger" value="1" @click="fetchUserslist">
+                                            <i class="pi pi-ban"></i> <span class="ml-3">Blocked</span>
+                                        </Tab>
+                                    </TabList>
+                                    <TabPanels class="p-1">
+                                        <TabPanel value="0" >
+                                            <div class="mt-2">
+                                                <InputText class="!py-1 !px-3 w-full mb-2" placeholder="Find a user" type="text" v-model="userSearch" @input="onUserSearchInput" />
+                                            </div>
+                                            <ShowProfile :user="selectedUser" v-model="isProfileModalVisible"
+                                                :messageSentEventUpdate="messageSentEventUpdate"
+                                                :goToChannel="goToChannel"
+                                                @reload-users-list="fetchUserslist"
+                                            />
+                                            <div v-for="user of usersList" @click="onShowProfile(user)" class="cursor-pointer hover:bg-emphasis rounded transition-all duration-200">
+                                                <div class="flex flex-1 items-center gap-2 w-12/12 p-3">
+                                                    <div class="rounded-full w-8 h-8 bg-cover bg-center"
+                                                        :style="{
+                                                            border: `#5dbea3 solid 1px`,
+                                                            backgroundColor: user.personal_color,
+                                                            backgroundImage: `url(${user.avatar_path})`
+                                                        }"
+                                                    >
+                                                    </div>
+                                                    <div class="flex flex-col flex-1">
+                                                        <span class="font-bold">{{ user.name }}</span>
+                                                        <p class="text-sm truncate w-10/12">Last login : {{ dateTimeFormat(user.last_login_at) }}</p>
+                                                    </div>
+                                                </div>
+                                                <Divider class="my-0" />
+                                            </div>
+                                        </TabPanel>
+                                        <TabPanel value="1" >
+                                            <div v-if="blockedUsers && blockedUsers.length">
+                                                <div v-for="user of blockedUsers" @click="onShowProfile(user)" class="cursor-pointer hover:bg-emphasis rounded transition-all duration-200">
+                                                    <div class="flex flex-1 items-center gap-2 w-12/12 p-3">
+                                                        <div class="rounded-full w-8 h-8 bg-cover bg-center"
+                                                            :style="{
+                                                                border: `#5dbea3 solid 1px`,
+                                                                backgroundColor: user.personal_color,
+                                                                backgroundImage: `url(${user.avatar_path})`
+                                                            }"
+                                                        >
+                                                        </div>
+                                                        <div class="flex flex-col flex-1">
+                                                            <span class="font-bold">{{ user.name }}</span>
+                                                            <p class="text-sm truncate w-10/12">Last login : {{ dateTimeFormat(user.last_login_at) }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Divider class="my-0" />
+                                                </div>
+                                            </div>
+                                            <div v-else>
+                                                <Message class="mt-5" severity="info">
+                                                    You have not blocked any user yet.
+                                                </Message>
+                                            </div>
+                                        </TabPanel>
+                                    </TabPanels>
+                                </Tabs>
                             </div>
                         </TabPanel>
                         <TabPanel value="2" class="p-2" style="height: calc(100vh - 150px) ;overflow-y:auto">
@@ -406,6 +464,7 @@ const isWritingAudio = useTemplateRef('is-writing-audio');
                             :isScrolledToBottom="isScrolledToBottom"
                             :messageSentEventUpdate="messageSentEventUpdate"
                             @chat-scrolled-down="isScrolledToBottom = true"
+                            @reload-channels-list="loadUserChannels"
                             :goToChannel="goToChannel"
                             :deleteChannel="deleteChannel"
                             :usersTypingIds="usersTypingIds"
@@ -444,5 +503,12 @@ const isWritingAudio = useTemplateRef('is-writing-audio');
     padding: 4px;
     background-color: #a881af;
 }
-
+.chat-side-container .p-tab-active.secondary {
+    background-color: transparent;
+    color: #5dbea3;
+}
+.chat-side-container .p-tab-active.danger {
+    background-color: transparent;
+    color: red;
+}
 </style>

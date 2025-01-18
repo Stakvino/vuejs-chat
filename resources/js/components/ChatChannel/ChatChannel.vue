@@ -4,7 +4,8 @@ import { dateTimeFormat } from '@/utils/helpers';
 import { computed } from 'vue';
 
 const props = defineProps([
-    'channel', 'onChannelClick', 'selectedChannel', 'unseenMessagesCount', 'showInfo'
+    'channel', 'onChannelClick', 'selectedChannel', 'unseenMessagesCount', 'showInfo',
+    'usersTypingIds'
 ]);
 
 const formatMessageCount = computed(() => {
@@ -34,7 +35,14 @@ const formatMessageCount = computed(() => {
         </div>
         <div class="flex flex-col max-w-full" style="width: calc(100% - 40px);">
             <span class="font-bold">{{ channel.info.receiver.name }}</span>
-            <p v-if="channel.info.lastMessage && showInfo" class="text-sm truncate">{{ channel.info.lastMessage.text }}</p>
+            <div style="height: 20px;">
+                <div v-if="usersTypingIds && usersTypingIds[channel.id] && usersTypingIds[channel.id].length">
+                    <img style="background-color: rgba(255,255,255,.5); border-radius: 6px; height: 15px"
+                        src="/images/chat/is-typing.gif" width="35" alt="user is typing"
+                    >
+                </div>
+                <p v-else-if="channel.info.lastMessage && showInfo" class="text-sm truncate">{{ channel.info.lastMessage.text }}</p>
+            </div>
         </div>
     </div>
     <div class="flex flex-col items-end h-full w-2/12">

@@ -45,6 +45,10 @@ class MessageController extends Controller
 
         $message = $sender->sendMessage($channel, $request->get('text'));
 
+        if ( $message === null ) {
+            return response()->json( ['success' => false], 403);
+        }
+
         $members = $channel->members();
         foreach ($members as $member) {
             MessageSent::dispatch($member, $channel, $message);

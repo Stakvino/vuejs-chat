@@ -32,8 +32,10 @@ Route::get('/get-csrf', function (Request $request) {
 
 Route::prefix('users')->name('users.')
 ->controller(UserController::class)->group(function () {
-    Route::get('/all', 'getAllUsers')->middleware(['auth:sanctum', 'verified'])->name('all');
+    Route::get('/all', 'usersListing')->middleware(['auth:sanctum', 'verified'])->name('all');
     Route::put('/message-event-received/{channel}/{message}', 'messageEventReceived')->name('message-event-received')->middleware(['auth:sanctum', 'verified']);
+    Route::post('/block/{user}', 'block')->name('block');
+    Route::delete('/unblock/{user}', 'unblock')->name('unblock');
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/{user}', 'showProfile')->name('show')->middleware(['auth:sanctum', 'verified']);
         Route::put('/update', 'updateProfile')->name('update')->middleware(['auth:sanctum', 'verified']);

@@ -15,7 +15,7 @@ const props = defineProps([
     'selectedChannel', 'isScrolledToBottom', 'messageSentEventUpdate','goToChannel',
     'deleteChannel', 'usersTypingIds'
 ]);
-const emit = defineEmits(['chat-scrolled-down', 'chat-scrolled-up'])
+const emit = defineEmits(['chat-scrolled-down', 'chat-scrolled-up', 'reload-channels-list'])
 
 const showChannelsList = defineModel('showChannelsList');
 
@@ -125,6 +125,7 @@ const onMessageSubmit = () => {
             const newMessage = response.data.message;
             props.messageSentEventUpdate(updatedChannel, newMessage);
             message.value = '';
+            axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, {'is-writing': false})
         }
     });
 }
@@ -161,6 +162,12 @@ const onMessageInput = () => {
 
 }
 
+const channelUsersTyping = computed(() => {
+    return props.usersTypingIds && props.usersTypingIds[props.selectedChannel.id]
+    ? props.usersTypingIds[props.selectedChannel.id]
+    : [];
+});
+
 </script>
 
 <template>
@@ -171,6 +178,7 @@ const onMessageInput = () => {
             :messageSentEventUpdate="messageSentEventUpdate"
             :goToChannel="goToChannel"
             v-model:showChannelsList="showChannelsList"
+            @reload-channels-list="emit('reload-channels-list')"
         />
         <PublicChatHeader  v-else
             :selectedChannel="selectedChannel"
@@ -180,8 +188,8 @@ const onMessageInput = () => {
             v-model:showChannelsList="showChannelsList"
         />
 
-        <div @scroll="onChatScroll" class="chat-messages-container relative p-2 max-h-full border" ref="chat-messages-container" >
-            <div class="m-auto md:w-10/12 flex flex-col justify-end items-start">
+        <div @scroll="onChatScroll" class="chat-messages-container relative py-2 md:p-2 max-h-full border flex flex-col justify-start items-start" ref="chat-messages-container" >
+            <div class="mx-auto w-10/12 flex flex-col justify-end items-start">
                 <ShowProfile :user="senderProfile" v-model="isProfileModalVisible"
                     :messageSentEventUpdate="messageSentEventUpdate"
                     :goToChannel="goToChannel"
@@ -201,39 +209,52 @@ const onMessageInput = () => {
                 />
 
             </div>
-            <Button class="chat-scrolldown-button sticky" @click="onChatScrollButtonCLick" v-if="showChatScrollDownButton" severity="secondary" icon="pi pi-arrow-down" raised rounded />
 
-            <div class="absolute flex justify-start items-end" style="bottom: 5px;">
+            <div class="mt-auto flex justify-start items-end">
                 <div style="opacity: 0; width: 22px; height: 22px"></div>
-                <div v-for="userId in usersTypingIds">
+                <div v-for="userId in channelUsersTyping">
                     <div v-if="selectedChannel.receivers.find(receiver => receiver.id === userId)"
                             class="relative sender-avatar rounded-full bg-cover bg-center"
                             style="border: #5dbea3 solid 1px; width: 22px; height: 22px"
                             :style="
                             {
-                                left: `${usersTypingIds.indexOf(userId) * -8}px`,
+                                left: `${channelUsersTyping.indexOf(userId) * -8}px`,
                                 backgroundColor: selectedChannel.receivers.find(receiver => receiver.id === userId).personal_color,
                                 backgroundImage: `url(${selectedChannel.receivers.find(receiver => receiver.id === userId).avatar_path})`
                             }"
                         >
                     </div>
                 </div>
-                <img :style="{ left: `${(usersTypingIds.length) * -8}px` }"
-                    :class="{'opacity-0': !usersTypingIds.length}" class="relative"
+                <img :style="{ left: `${(channelUsersTyping.length) * -8}px` }"
+                    v-if="channelUsersTyping.length" class="relative"
                     style="background-color: rgba(255,255,255,.5); border-radius: 6px; height: 15px"
                     src="/images/chat/is-typing.gif" width="35" alt="user is typing"
                 >
             </div>
 
+            <!-- <Button class="chat-scrolldown-button sticky" @click="onChatScrollButtonCLick" v-if="showChatScrollDownButton" severity="secondary" icon="pi pi-arrow-down" raised rounded /> -->
+
         </div>
 
-        <div class="mt-2 mx-auto w-11/12 md:w-10/12 sending-message-input bg-white">
-            <form @submit.prevent="onMessageSubmit">
+
+
+        <div class="flex mt-2 mx-auto w-11/12 md:w-10/12 sending-message-input relative">
+
+            <Button class="chat-scrolldown-button absolute" @click="onChatScrollButtonCLick" v-if="showChatScrollDownButton" severity="secondary" icon="pi pi-arrow-down" raised rounded />
+
+            <form @submit.prevent="onMessageSubmit" class="flex-1">
                 <IconField class="w-full">
-                    <InputText @input="onMessageInput" autofocus class="w-full" v-model="message" placeholder="Message" />
+                    <InputText id="messageInput" @input="onMessageInput" class="w-full" v-model="message" placeholder="Message" />
                     <InputIcon class="pi pi-send text-xl" />
                 </IconField>
             </form>
+
+            <div>
+                <Button class="action-button ml-2" raised rounded icon="pi pi-paperclip" title="Send a file" />
+                <input type="file" ref="send-file-input" >
+                <Button class="action-button ml-1" raised rounded icon="pi pi-microphone" title="Send a voice message"/>
+            </div>
+
         </div>
 
     </div>
@@ -255,7 +276,18 @@ const onMessageInput = () => {
     font-weight: bold;
 }
 .chat-scrolldown-button {
-    left: 100%;
-    bottom: 5px;
+    /*left: 100%;
+    bottom: 5px;*/
+    bottom: calc(100% + 30px);
+    right: -30px;
+}
+@media only screen and (max-width: 750px) {
+    .chat-scrolldown-button {
+        left: auto;
+        right: 0;
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
 }
 </style>

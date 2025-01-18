@@ -1,7 +1,7 @@
 <script setup>
 import Dialog from 'primevue/dialog';
 import { ref, onMounted, watchEffect } from "vue";
-import { InputText, Button, Avatar, Message, Toast, Textarea } from 'primevue';
+import { InputText, Button, Avatar, Message, Toast, Textarea, useConfirm, ConfirmPopup } from 'primevue';
 import { useToast } from "primevue/usetoast";
 import { useAuthStore } from '@/stores/useAuth';
 import { useModalStore } from '@/stores/useModal';
@@ -9,6 +9,7 @@ import { storeToRefs } from 'pinia';
 import axios from 'axios';
 
 const props = defineProps(['user', 'messageSentEventUpdate', 'goToChannel']);
+const emits = defineEmits(['reload-users-list']);
 
 const modalStore = useModalStore();
 const { isProfileModalVisible, isChannelModalVisible } = storeToRefs(modalStore);
@@ -31,11 +32,78 @@ const onMessageSubmit = () => {
         }
     });
 }
+
+const confirm = useConfirm();
+
+const blockUserConfirm = () => {
+    confirm.require({
+        message: 'Are you sure you want to block this user ?',
+        header: 'Confirmation',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true,
+            class: 'action-button !rounded py-1 px-3 w-20'
+        },
+        acceptProps: {
+            label: 'Block',
+            class: 'error-button rounded py-1 px-3 w-20'
+        },
+        accept: () => {
+            axios.post(`/api/users/block/${props.user.id}`)
+            .then(response => {
+                if (response.data.success) {
+                    emits('reload-users-list');
+                    isProfileModalVisible.value = false;
+                }
+            })
+        }
+    });
+}
+
+const unblockUserConfirm = () => {
+    confirm.require({
+        message: 'Are you sure you want to unblock this user ?',
+        header: 'Confirmation',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true,
+            class: 'action-button !rounded py-1 px-3 w-20'
+        },
+        acceptProps: {
+            label: 'Unblock',
+            class: 'error-button rounded py-1 px-3 w-20'
+        },
+        accept: () => {
+            axios.delete(`/api/users/unblock/${props.user.id}`)
+            .then(response => {
+                if (response.data.success) {
+                    emits('reload-users-list');
+                    isProfileModalVisible.value = false;
+                }
+            })
+        }
+    });
+}
+
 </script>
 
 <template>
     <div v-if="user">
         <Dialog dismissableMask v-model:visible="isVisible" position="top" modal :header="user.name" :style="{ width: '25rem' }">
+            <div class="flex" v-if="user.is_blocked">
+                <Button @click="unblockUserConfirm" class="action-button !py-1 !px-3 !rounded-md" raised severity="secondary">
+                    Unblock user
+                </Button>
+            </div>
+            <div v-else>
+                <Button @click="blockUserConfirm" class="error-button !py-1 !px-3 !rounded-md" raised severity="secondary">
+                    Block user <i class="pi pi-ban"></i>
+                </Button>
+            </div>
             <div class="flex justify-center items-start p-2 rounded">
                 <div class="relative">
                     <Avatar
@@ -56,16 +124,19 @@ const onMessageSubmit = () => {
                 <label for="username" class="font-semibold w-24">Username</label>
                 <p>{{ user.username }}</p>
             </div>
-            <div v-if="authUser.id !== user.id" class="flex gap-2 mt-8">
+            <div v-if="authUser.id !== user.id && !user.is_blocked" class="flex gap-2 mt-8">
                 <form @submit.prevent="onMessageSubmit" class="w-full">
                     <div class="flex flex-col gap-1 mb-4">
                         <label for="message_input" class="font-semibold w-24">Message</label>
                         <Textarea v-model="message" id="message_input" rows="2" cols="30" />
                     </div>
-                    <Button class="action-button !py-1 !px-3 sm:!py-2 sm:!px-5 !rounded-md" raised type="submit" label="Send message"></Button>
+                    <Button class="action-button !py-1 !px-3 sm:!py-2 sm:!px-5 !rounded-md" raised type="submit">
+                        Send message <i class="pi pi-send"></i>
+                    </Button>
                 </form>
             </div>
             <div v-else class="mt-8" style="height: 150px;"></div>
         </Dialog>
+        <ConfirmPopup></ConfirmPopup>
     </div>
 </template>

@@ -16,28 +16,30 @@ class UserController extends Controller
 {
 
     /**
-     * Get all users except auth user.
+     * Get all users except auth user and blocked users.
      *
      * @return Illuminate\Http\JsonResponse
      */
-    function getAllUsers(Request $request) : JsonResponse
+    function usersListing(Request $request) : JsonResponse
     {
-        $query = User::whereNot('id', auth()->user()->id);
+        $blockedUsers = auth()->user()->getBlockedUsers();
+        $query = User::whereNot('id', auth()->user()->id)
+        ->whereNotIn('id', $blockedUsers->pluck('id')->toArray());
+
         if ( $request->get('user-search') ) {
             $query->where('name', 'like', '%'. $request->get('user-search') .'%');
         }
-        $users = $query->get()->map(function($user) {
+
+        $users = $query->select(...User::ALLOWED_COLLUMNS)->orderBy('name')
+        ->get()->map(function($user) {
                 $user->avatar_path = $user->avatarPath();
-                $user = $user->only([
-                    'id', 'name', 'username', 'email', 'personal_color',
-                    'email_verified_at', 'avatar_path', 'last_login_at'
-                ]);
                 return $user;
             });
 
         return response()->json([
             'success' => true,
-            'users' => $users
+            'users' => $users,
+            'blocked-users' => $blockedUsers
         ]);
     }
 
@@ -67,8 +69,10 @@ class UserController extends Controller
     public function showProfile(User $user): JsonResponse
     {
         $user->avatar_path = $user->avatarPath();
+        $user->is_blocked = auth()->user()->hasBlocked($user);
+
         $user = $user->only([
-            'id', 'name', 'username', 'personal_color', 'avatar_path'
+            'id', 'name', 'username', 'personal_color', 'avatar_path', 'is_blocked'
         ]);
 
         return response()->json([
@@ -134,6 +138,30 @@ class UserController extends Controller
             'success' => true,
             'channelInfo' => $channel->getInfo(),
             'messageInfo' => $message->getInfo()
+        ]);
+    }
+
+    /**
+     * Block a user.
+     */
+    public function block(User $user): JsonResponse
+    {
+        auth()->user()->block($user);
+
+        return response()->json([
+            'success' => true,
+        ]);
+    }
+
+    /**
+     * Unblock a user.
+     */
+    public function unblock(User $user): JsonResponse
+    {
+        auth()->user()->unblock($user);
+
+        return response()->json([
+            'success' => true,
         ]);
     }
 

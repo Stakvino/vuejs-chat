@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Utils\Helpers;
 use App\Models\Channel;
 use App\Models\Message;
+use App\Models\BlockUser;
 use App\Models\ChannelType;
 use App\Models\ChannelUser;
 use App\Models\MessageSeen;
@@ -52,9 +53,13 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
         'remember_token',
     ];
 
-     /** Const values */
-     const AVATAR_FOLDER_PATH = "/images/avatars/";
-     const DEFAULT_AVATAR_PATH = "/images/avatars/default.png";
+    /** Const values */
+    const AVATAR_FOLDER_PATH = "/images/avatars/";
+    const DEFAULT_AVATAR_PATH = "/images/avatars/default.png";
+    const ALLOWED_COLLUMNS = [
+        'id', 'name', 'username', 'email', 'personal_color',
+        'email_verified_at', 'avatar', 'last_login_at'
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -104,7 +109,11 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
         $channels = $query->when($typeId, function ($q) use($typeId) {
             return $q->where('channels.channel_type_id', $typeId);
         })
-        ->get()->map(function ($channel) {
+        ->get()
+        ->filter(function ($channel) {
+            return !auth()->user()->hasBlockedChannel($channel);
+        })
+        ->map(function ($channel) {
             $channel->info = $channel->getInfo();
             return $channel;
         });
@@ -177,12 +186,88 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     }
 
     /**
+     *  Check if user has blocked $user
+     *
+     * @return bool
+     */
+    public function hasBlocked(User $user): bool
+    {
+        return !!BlockUser::where([
+            'user_id' => $this->id,
+            'blocked_user_id' => $user->id
+        ])->first();
+    }
+
+    /**
+     *  Check if user has blocked private channel
+     *
+     * @return bool
+     */
+    public function hasBlockedChannel(Channel $channel): bool
+    {
+        $receiver = $channel->receivers()->first();
+        return $channel->isPrivate() && $this->hasBlocked($receiver);
+    }
+
+    /**
+     *  Block a user
+     *
+     * @return App\Models\BlockUser
+     */
+    public function block(User $user): BlockUser
+    {
+        return BlockUser::create([
+            'user_id' => $this->id,
+            'blocked_user_id' => $user->id
+        ]);
+    }
+
+    /**
+     *  Unblock a user
+     *
+     * @return bool
+     */
+    public function unblock(User $user): bool
+    {
+        return BlockUser::where([
+            'user_id' => $this->id,
+            'blocked_user_id' => $user->id
+        ])->delete();
+    }
+
+    /**
+     *  Get all the blocked users
+     *
+     * @return Illuminate\Database\Eloquent\Collection
+     */
+    public function getBlockedUsers(): Collection
+    {
+        $blockedUsersIds = BlockUser::where('user_id', $this->id)
+            ->get()->pluck('blocked_user_id')->toArray();
+
+        return User::whereIn('id', $blockedUsersIds)
+            ->select(...User::ALLOWED_COLLUMNS)->orderBy('name')
+            ->get()->map(function($user) {
+                $user->avatar_path = $user->avatarPath();
+                return $user;
+            });
+    }
+
+    /**
      *  Store message and dispatch event
      *
-     * @return App\Models\Message
+     * @return App\Models\Message | null
      */
-    public function sendMessage(Channel $channel, string $text): Message
+    public function sendMessage(Channel $channel, string $text): Message | null
     {
+        // Trying to send a message to a blocked user
+        if ( $channel->isPrivate() ) {
+            $receiver = $channel->receivers()->first();
+            if ( auth()->user()->hasBlocked($receiver) ) {
+                return null;
+            }
+        }
+
         $message = Message::create([
             'text' => $text,
             'channel_id' => $channel->id,
@@ -201,8 +286,6 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
 
         MessageSeen::insert($messageSeens->toArray());
         $channel->update(['updated_at' => now()]);
-
-        // Dispatch event
 
         return $message;
     }

@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios';
 import { computed, onUpdated, ref } from 'vue';
-import { AutoComplete, Button, IconField, InputIcon, InputText, Menu } from 'primevue';
+import { AutoComplete, Button, ConfirmPopup, IconField, InputIcon, InputText, Menu, useConfirm } from 'primevue';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
 import { dateTimeFormat } from '@/utils/helpers';
 import { useModalStore } from '@/stores/useModal';
@@ -9,6 +9,7 @@ import { storeToRefs } from 'pinia';
 import { useAppStore } from '@/stores/useApp';
 
 const props = defineProps(['selectedChannel', 'messageSentEventUpdate', 'goToChannel']);
+const emits = defineEmits(['reload-channels-list']);
 
 const showChannelsList = defineModel('showChannelsList');
 
@@ -23,11 +24,45 @@ const selectedCountry = ref();
 const filteredCountries = ref();
 const userOptionsMenu = ref();
 
+const confirm = useConfirm();
+
+const blockUserConfirm = () => {
+    confirm.require({
+        message: 'Are you sure you want to block this user ?',
+        header: 'Confirmation',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true,
+            class: 'action-button !rounded py-1 px-3 w-20'
+        },
+        acceptProps: {
+            label: 'Block',
+            class: 'error-button rounded py-1 px-3 w-20'
+        },
+        accept: () => {
+            axios.post(`/api/users/block/${receiver.value.id}`)
+            .then(response => {
+                if (response.data.success) {
+                    emits('reload-channels-list');
+                }
+            })
+        }
+    });
+}
+
 const userOptionsMenuItems = ref([
     {
         items: [
             { label: "Options" },
-            { label: 'Block user', icon: 'pi pi-ban' },
+            {
+                label: 'Block user',
+                icon: 'pi pi-ban',
+                command: () => {
+                    blockUserConfirm();
+                }
+            },
         ]
     }
 ]);
@@ -105,6 +140,7 @@ const lastMessage = computed(() => {
                 <Button style="color: black;" icon="pi pi-search" aria-label="Search in chat" />
             </div>
             -->
+            <ConfirmPopup></ConfirmPopup>
             <div class="ml-auto">
                 <Button class="three-dots-btn" type="button" icon="pi pi-ellipsis-v" @click="toggleUserOptionsMenu" size="large" aria-haspopup="true" aria-controls="user_options_menu" />
                 <Menu ref="userOptionsMenu" id="user_options_menu" :model="userOptionsMenuItems" :popup="true" />

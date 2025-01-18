@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('block_users', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class);
+            $table->foreignId('blocked_user_id');
             $table->foreign('blocked_user_id')->references('id')->on('users');
             $table->timestamps();
         });
