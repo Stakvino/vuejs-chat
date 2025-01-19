@@ -1,8 +1,6 @@
 <?php
 
-use App\Models\User;
-use App\Models\Channel;
-use App\Models\MessageType;
+use App\Models\Message;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
@@ -14,13 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('messages', function (Blueprint $table) {
+        Schema::create('file_messages', function (Blueprint $table) {
             $table->id();
-            $table->string('text');
-            $table->foreignIdFor(Channel::class);
-            $table->foreignIdFor(User::class);
-            $table->foreignIdFor(MessageType::class);
-            $table->boolean('is_deleted')->default(false);
+            $table->foreignIdFor(Message::class);
+            $table->string('original_file_name');
+            $table->string('file_path');
+            $table->boolean('is_image')->default(false);
             $table->timestamps();
         });
     }
@@ -30,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('messages');
+        Schema::dropIfExists('file_messages');
     }
 };

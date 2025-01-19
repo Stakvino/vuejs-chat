@@ -1,6 +1,7 @@
 <script setup>
-import { AutoComplete, Button, IconField, InputIcon, InputText, Menu, ProgressSpinner, VirtualScroller } from 'primevue';
+import { AutoComplete, Button, IconField, InputIcon, InputText, Menu, ProgressSpinner, Toast, VirtualScroller } from 'primevue';
 import { computed, onMounted, onUpdated, ref, useTemplateRef, watchEffect } from 'vue';
+import { useToast } from "primevue/usetoast";
 import ChatMessage from '@/components/ChatMessage/ChatMessage.vue';
 import axios from 'axios';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
@@ -10,6 +11,9 @@ import PrivateChatHeader from './PrivateChatHeader.vue';
 import { useModalStore } from '@/stores/useModal';
 import { storeToRefs } from 'pinia';
 import { getLocalMoment } from '../../utils/helpers';
+import WaveSurfer from 'wavesurfer.js';
+import RecordPlugin from 'wavesurfer.js/dist/plugins/record.js';
+import moment from 'moment';
 
 const props = defineProps([
     'selectedChannel', 'isScrolledToBottom', 'messageSentEventUpdate','goToChannel',
@@ -18,12 +22,12 @@ const props = defineProps([
 const emit = defineEmits(['chat-scrolled-down', 'chat-scrolled-up', 'reload-channels-list'])
 
 const showChannelsList = defineModel('showChannelsList');
+const toast = useToast();
 
 const modalStore = useModalStore();
 const { isProfileModalVisible } = storeToRefs(modalStore);
 
 const showChatScrollDownButton = ref(false);
-
 const scrollChatTo = top => {
     chatMessagesContainer.value.classList.remove("scroll-smooth");
     chatMessagesContainer.value.scrollTo({top: top});
@@ -42,6 +46,7 @@ const scrollToBottom = () => {
 const chatMessagesContainer = useTemplateRef('chat-messages-container');
 onMounted(() => {
     scrollToBottom();
+    document.getElementById('messageInput').focus();
 });
 
 const mustChangeChatScroll = ref(false);
@@ -168,6 +173,98 @@ const channelUsersTyping = computed(() => {
     : [];
 });
 
+const sendFileInput = useTemplateRef('send-file-input');
+const attachmentIsLoading = ref(false);
+const onattachmentChange = e => {
+    if ( !e.target.files.length ) return;
+    attachmentIsLoading.value = true;
+    const attachment = e.target.files[0];
+    const formData = new FormData();
+    formData.append('channel_id', props.selectedChannel.id);
+    formData.append('text', attachment.name);
+    formData.append('attachment', attachment);
+    formData.append('_method', 'POST');
+    axios.post('/api/messages/', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    }).then(response => {
+        if ( response.data['success'] ) {
+            const updatedChannel = response.data.channel;
+            const newMessage = response.data.message;
+            props.messageSentEventUpdate(updatedChannel, newMessage);
+        }
+    })
+    .catch(e => toast.add({ severity: 'error', summary: 'Error while trying to upload file.', life: 3000 }) )
+    .finally(() => attachmentIsLoading.value = false)
+}
+
+const isRecordingAudio = ref(false);
+const audioMessageIsLoading = ref(false);
+let audioRecord = null;
+const onAudioRecordClick = () => {
+
+    if ( audioRecord && audioRecord.isRecording() ) {
+        audioRecord.stopRecording();
+        document.getElementById('audioRecordButton').innerHTML = "";
+        isRecordingAudio.value = false;
+        return;
+    }
+
+    const wavesurfer = WaveSurfer.create({
+        container: '#audioRecordButton',
+        waveColor: 'rgb(168 129 175)',
+        progressColor: 'rgb(100, 0, 100)',
+        height: 40,
+        barHeight: 3
+    });
+    audioRecord = wavesurfer.registerPlugin(
+        RecordPlugin.create({
+            renderRecordedAudio: false,
+            scrollingWaveform: true,
+            continuousWaveform: false,
+            continuousWaveformDuration: 30, // optional
+        }),
+    )
+
+    audioRecord.startRecording()
+    .then(() => isRecordingAudio.value = true)
+    .then(() => onChatScrollButtonCLick())
+
+    const maxSeconds = 600;
+    audioRecord.on('record-progress', (blob) => {
+        if ( audioRecord.getDuration() > maxSeconds * 1000 ) {
+            audioRecord.stopRecording();
+        }
+    })
+
+    audioRecord.on('record-end', (blob) => {
+        audioMessageIsLoading.value = true;
+        const formData = new FormData();
+        formData.append('channel_id', props.selectedChannel.id);
+        const duration = moment.utc(audioRecord.getDuration()).format('mm:ss');
+        formData.append('text', `Audio message - ${duration}`);
+        formData.append('audio', blob);
+        formData.append('audio-duration', audioRecord.getDuration());
+        formData.append('_method', 'POST');
+        axios.post('/api/messages/', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        }).then(response => {
+            if ( response.data['success'] ) {
+                const updatedChannel = response.data.channel;
+                const newMessage = response.data.message;
+                props.messageSentEventUpdate(updatedChannel, newMessage);
+            }
+        })
+        .catch(e => toast.add({ severity: 'error', summary: 'Error while trying to upload file.', life: 3000 }) )
+        .finally(() => audioMessageIsLoading.value = false)
+
+    });
+
+}
+
 </script>
 
 <template>
@@ -210,7 +307,12 @@ const channelUsersTyping = computed(() => {
 
             </div>
 
-            <div class="mt-auto flex justify-start items-end">
+            <div id="audioRecordButton" style="border: #a881af solid 3px"
+                :class="{hidden: !isRecordingAudio}"
+                class="mt-auto w-8/12 ml-auto bg-white rounded-3xl border">
+            </div>
+
+            <div class="flex justify-start items-end">
                 <div style="opacity: 0; width: 22px; height: 22px"></div>
                 <div v-for="userId in channelUsersTyping">
                     <div v-if="selectedChannel.receivers.find(receiver => receiver.id === userId)"
@@ -249,14 +351,30 @@ const channelUsersTyping = computed(() => {
                 </IconField>
             </form>
 
-            <div>
-                <Button class="action-button ml-2" raised rounded icon="pi pi-paperclip" title="Send a file" />
-                <input type="file" ref="send-file-input" >
-                <Button class="action-button ml-1" raised rounded icon="pi pi-microphone" title="Send a voice message"/>
+            <div class="flex">
+                <Button
+                    class="action-button ml-2"
+                    @click="sendFileInput.click()"
+                    raised rounded icon="pi pi-paperclip" title="Send a file"
+                    :loading="attachmentIsLoading"
+                />
+                <input class="hidden" type="file" ref="send-file-input" @change="onattachmentChange" >
+                <Button class="action-button ml-1 flex justif-center items-center" raised rounded
+                    @click="onAudioRecordClick"
+                    title="Send a voice message"
+                    style="width: 40px; height: 40px"
+                    :loading="audioMessageIsLoading"
+                >
+                    <span v-if="isRecordingAudio" class="flex justify-center items-center" style="width: 40px; height: 40px">
+                        <span class="bg-red-600 rounded-full record-red-icon"></span>
+                    </span>
+                    <i v-else-if="!audioMessageIsLoading" class="pi pi-microphone" style="font-size: 1.2rem"></i>
+                </Button>
             </div>
 
         </div>
 
+        <Toast />
     </div>
 </template>
 
@@ -290,4 +408,19 @@ const channelUsersTyping = computed(() => {
         font-size: 12px;
     }
 }
+
+.record-red-icon {
+    width: 12px;
+    height: 12px;
+    /* transition: width 2s, height 2s; */
+    animation-name: signal;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+}
+@keyframes signal {
+    0% {background-color: rgba(200,0,0, 1);}
+    50% {background-color: rgba(200,0,0, .5);}
+    100% {background-color: rgba(200,0,0, 1);}
+}
+
 </style>

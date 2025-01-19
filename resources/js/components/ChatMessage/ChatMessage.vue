@@ -5,7 +5,8 @@ import { dateTimeFormat } from '@/utils/helpers';
 import { getLocalMoment } from '@/utils/helpers';
 import { useAuthStore } from '@/stores/useAuth';
 import { storeToRefs } from 'pinia';
-import { Divider } from 'primevue';
+import { Button, Divider, Image } from 'primevue';
+import AudioMessageReader from '../AudioMessageReader/AudioMessageReader.vue';
 
 const props = defineProps([
     "message", "usersSeen", "isMyMessage", "sender", "mustShowSender", "onShowProfile",
@@ -64,20 +65,99 @@ const computedSeenByMessage = computed(() => {
                 </div>
             </div>
             <div :class="isMyMessage ? 'my-message-container': 'others-message-container'">
-                <span>
-                    {{ message.text }}
+                <span v-if="message.info.is_image">
+                    <div class="flex flex-col items-end justify-end">
+                        <Image :src="message.info.file_path" alt="Image" width="80" height="60" preview />
+                        <div class="flex items-end mt-2">
+                            <div>
+                                <Button
+                                    class="action-button border border-white" as="a"
+                                    style="width: 25px; height: 25px" size="small" raised rounded
+                                    icon="pi pi-download text-xs" title="Download file"
+                                    :href="message.info.file_path" :download="message.text"
+                                />
+                            </div>
+                            <span class="message-info ml-auto"
+                                :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
+                                v-tooltip.top="
+                                isSeen ?
+                                { value: computedSeenByMessage, class: 'users-seen-tooltip' }
+                                : null"
+                            >
+                                <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
+                                <span v-if="isMyMessage">
+                                    <i class="pi pi-check seen-icon"></i>
+                                    <i :class="{'hide': !isSeen}" class="pi pi-check seen-icon relative" style="right: 10px"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
                 </span>
-                <span class="float-right message-info relative"
-                    :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
-                    v-tooltip.top="
-                    isSeen ?
-                    { value: computedSeenByMessage, class: 'users-seen-tooltip' }
-                    : null"
-                >
-                    <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
-                    <span v-if="isMyMessage">
-                        <i class="pi pi-check seen-icon"></i>
-                        <i :class="{'hide': !isSeen}" class="pi pi-check seen-icon relative" style="right: 10px"></i>
+                <span v-else-if="message.info.is_file">
+                    <div class="flex flex-col items-end justify-end">
+                        <div class="bg-gray-500 rounded">
+                            <i class="pi pi-file text-5xl p-2"></i>
+                        </div>
+                        <div class="flex items-end mt-2">
+                            <div>
+                                <Button class="action-button border border-white" as="a"
+                                    style="width: 25px; height: 25px" size="small" raised rounded
+                                    icon="pi pi-download text-xs" title="Download file"
+                                    :href="message.info.file_path" :download="message.text"
+                                />
+                            </div>
+                            <span class="message-info ml-auto"
+                                :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
+                                v-tooltip.top="
+                                isSeen ?
+                                { value: computedSeenByMessage, class: 'users-seen-tooltip' }
+                                : null"
+                            >
+                                <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
+                                <span v-if="isMyMessage">
+                                    <i class="pi pi-check seen-icon"></i>
+                                    <i :class="{'hide': !isSeen}" class="pi pi-check seen-icon relative" style="right: 10px"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </span>
+
+                <span v-else-if="message.info.is_audio">
+                    <div class="flex flex-col items-end justify-end">
+                        <AudioMessageReader :filePath="message.info.audio_path" />
+                        <div class="flex items-end mt-2">
+                            <span class="message-info ml-auto"
+                                :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
+                                v-tooltip.top="
+                                isSeen ?
+                                { value: computedSeenByMessage, class: 'users-seen-tooltip' }
+                                : null"
+                            >
+                                <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
+                                <span v-if="isMyMessage">
+                                    <i class="pi pi-check seen-icon"></i>
+                                    <i :class="{'hide': !isSeen}" class="pi pi-check seen-icon relative" style="right: 10px"></i>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </span>
+
+                <span v-else>
+                    <span>{{ message.text }}</span>
+                    <span class="float-right message-info relative"
+                        :class="{seen: isSeen && isMyMessage, right: isMyMessage, left: !isMyMessage}"
+                        v-tooltip.top="
+                        isSeen ?
+                        { value: computedSeenByMessage, class: 'users-seen-tooltip' }
+                        : null"
+                    >
+                        <span class="ml-3 message-time">{{ getLocalMoment(message.created_at).format('HH:mm') }}</span>
+                        <span v-if="isMyMessage">
+                            <i class="pi pi-check seen-icon"></i>
+                            <i :class="{'hide': !isSeen}" class="pi pi-check seen-icon relative" style="right: 10px"></i>
+                        </span>
                     </span>
                 </span>
             </div>

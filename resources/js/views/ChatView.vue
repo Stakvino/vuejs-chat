@@ -246,7 +246,11 @@ const goToChannel = async channelId => {
             });
         }
     });
+
+    const messageInput = document.getElementById('messageInput');
+    if ( messageInput ) messageInput.focus();
 }
+
 const onChannelClick = (channelId) => {
     goToChannel(channelId);
     showChannelsList.value = false;

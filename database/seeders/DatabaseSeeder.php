@@ -9,6 +9,7 @@ use Database\Seeders\UserSeeder;
 use Database\Seeders\ChannelSeeder;
 use Database\Seeders\MessageSeeder;
 use Database\Seeders\ChannelTypeSeeder;
+use Database\Seeders\MessageTypeSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,6 +23,7 @@ class DatabaseSeeder extends Seeder
             ChannelSeeder::class,
             // MessageSeeder::class,
             ChannelTypeSeeder::class,
+            MessageTypeSeeder::class
         ]);
     }
 }

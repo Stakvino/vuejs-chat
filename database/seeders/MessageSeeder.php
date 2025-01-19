@@ -18,11 +18,5 @@ class MessageSeeder extends Seeder
         Message::factory()
         ->count(200)
         ->create();
-        $hadi = User::where('email', 'hadisir@gmail.com')->first();
-        Message::create([
-            'text' => 'am here !',
-            'channel_id' => 1,
-            'user_id' => $hadi->id
-        ]);
     }
 }

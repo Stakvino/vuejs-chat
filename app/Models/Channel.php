@@ -123,6 +123,9 @@ class Channel extends Model
         $lastMessage = $this->lastMessage();
         if ( $lastMessage ) {
             $lastMessage->since = Helpers::dateTimeFormat($lastMessage->created_at);
+            $lastMessage->is_file = $lastMessage->isFile();
+            $lastMessage->is_image = $lastMessage->isImage();
+            $lastMessage->is_audio = $lastMessage->isAudio();
         }
 
         return [

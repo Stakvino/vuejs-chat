@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Events\MessageSent;
 use App\Events\UserWriting;
 use App\Models\ChannelType;
+use App\Models\MessageType;
 use Illuminate\Http\Request;
 use App\Events\ChannelCreated;
 use Illuminate\Http\JsonResponse;
@@ -43,7 +44,22 @@ class MessageController extends Controller
             }
         }
 
-        $message = $sender->sendMessage($channel, $request->get('text'));
+        $message = [
+            'text' => $request->get('text'),
+            'type' => MessageType::find(MessageType::TEXT_ID)
+        ];
+        if ( $request->hasFile('attachment') ) {
+            $message['type'] = MessageType::find(MessageType::FILE_ID);
+            $message['attachment'] = $request->file('attachment');
+        }
+
+        if ( $request->hasFile('audio') ) {
+            $message['type'] = MessageType::find(MessageType::AUDIO_ID);
+            $message['audio'] = $request->file('audio');
+            $message['audio-duration'] = $request->get('audio-duration');
+        }
+
+        $message = $sender->sendMessage($channel, $message);
 
         if ( $message === null ) {
             return response()->json( ['success' => false], 403);
@@ -62,6 +78,16 @@ class MessageController extends Controller
             'channel' => $channel,
             'message' => $message
         ]);
+    }
+
+    /**
+     * Store file that was sent as a message.
+     *
+     *  @return Illuminate\Http\JsonResponse
+     */
+    public function storeattachment(Request $request) : JsonResponse
+    {
+
     }
 
     /**

@@ -9,6 +9,8 @@ use App\Models\BlockUser;
 use App\Models\ChannelType;
 use App\Models\ChannelUser;
 use App\Models\MessageSeen;
+use App\Models\MessageType;
+use App\Models\AudioMessage;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Notifications\Notifiable;
@@ -258,7 +260,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
      *
      * @return App\Models\Message | null
      */
-    public function sendMessage(Channel $channel, string $text): Message | null
+    public function sendMessage(Channel $channel, array $message): Message | null
     {
         // Trying to send a message to a blocked user
         if ( $channel->isPrivate() ) {
@@ -268,16 +270,37 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
             }
         }
 
-        $message = Message::create([
-            'text' => $text,
+        $createdMessage = Message::create([
+            'text' => $message['text'],
             'channel_id' => $channel->id,
             'user_id' => $this->id,
+            'message_type_id' => $message['type']->id
         ]);
 
+        if ( isset($message['attachment']) ) {
+            $fileName = $createdMessage->id . "-" . now()->format('d_m_y_h_i_s');
+            $message['attachment']->storeAs('/chat-files/attachments', $fileName, 'public' );
+            FileMessage::create([
+                'message_id' => $createdMessage->id,
+                'original_file_name' => $message['attachment']->getClientOriginalName(),
+                'file_path' => FileMessage::FOLDER_PATH . $fileName,
+                'is_image' => \str_starts_with($message['attachment']->getClientMimeType(), 'image'),
+            ]);
+        }
+        if ( isset($message['audio']) ) {
+            $fileName = $createdMessage->id . "-" . now()->format('d_m_y_h_i_s');
+            $message['audio']->storeAs('/chat-files/audio-messages', $fileName, 'public' );
+            AudioMessage::create([
+                'message_id' => $createdMessage->id,
+                'file_path' => AudioMessage::FOLDER_PATH . $fileName,
+                'duration' => $message['audio-duration'],
+            ]);
+        }
+
         $now = now();
-        $messageSeens = $channel->members()->map(function($member) use($message, $now) {
+        $messageSeens = $channel->members()->map(function($member) use($createdMessage, $now) {
             return [
-                'message_id' => $message->id,
+                'message_id' => $createdMessage->id,
                 'user_id' => $member->id,
                 'is_seen' => $member->id === $this->id ? true : false,
                 'created_at' => $now
@@ -287,7 +310,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
         MessageSeen::insert($messageSeens->toArray());
         $channel->update(['updated_at' => now()]);
 
-        return $message;
+        return $createdMessage;
     }
 
     /**
