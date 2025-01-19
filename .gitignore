@@ -4,6 +4,7 @@
 /public/hot
 /public/storage
 /public/images/avatars
+/public/chat-files
 /storage/*.key
 /storage/pail
 /vendor
