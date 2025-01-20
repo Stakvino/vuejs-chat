@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('file_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Message::class);
+            $table->foreignIdFor(Message::class)->onDelete('cascade');
             $table->string('original_file_name');
             $table->string('file_path');
             $table->boolean('is_image')->default(false);

@@ -61,4 +61,5 @@ Route::prefix('messages')->middleware(['auth:sanctum', 'verified'])->name('messa
     Route::post('/user-is-writing/{channel}', 'userIsWriting')->name('user-is-writing');
     Route::get('getinfo/{message}', 'getInfo')->name('get-info');
     Route::get('get-messages', 'getMessages')->name('get-messages');
+    Route::delete('/{message}', 'destroy')->name('destroy');
 });

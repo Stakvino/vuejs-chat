@@ -53,19 +53,16 @@ const leaveChannelConfirm = () => {
     });
 }
 
-const userOptionsMenuItems = ref([
+const userOptionsMenuItems = ref
+([
+    { label: "Options" },
     {
-        items: [
-            { label: "Options" },
-            {
-                label: 'Leave channel',
-                icon: 'pi pi-ban',
-                command: () => {
-                    leaveChannelConfirm();
-                }
-            },
-        ]
-    }
+        label: 'Leave channel',
+        icon: 'pi pi-ban',
+        command: () => {
+            leaveChannelConfirm();
+        }
+    },
 ]);
 
 const toggleUserOptionsMenu = (event) => {

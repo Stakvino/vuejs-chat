@@ -21,4 +21,8 @@ Broadcast::channel('user-writing.{user}', function (User $user) {
     return $user->id === auth()->user()->id;
 });
 
+Broadcast::channel('message-deleted.{user}', function (User $user) {
+    return $user->id === auth()->user()->id;
+});
+
 

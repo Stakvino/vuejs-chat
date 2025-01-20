@@ -52,19 +52,16 @@ const blockUserConfirm = () => {
     });
 }
 
-const userOptionsMenuItems = ref([
+const userOptionsMenuItems = ref
+([
+    { label: "Options" },
     {
-        items: [
-            { label: "Options" },
-            {
-                label: 'Block user',
-                icon: 'pi pi-ban',
-                command: () => {
-                    blockUserConfirm();
-                }
-            },
-        ]
-    }
+        label: 'Block user',
+        icon: 'pi pi-ban',
+        command: () => {
+            blockUserConfirm();
+        }
+    },
 ]);
 
 const toggleUserOptionsMenu = (event) => {

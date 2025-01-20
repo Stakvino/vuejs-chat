@@ -3,7 +3,8 @@
 namespace App\Events;
 
 use App\Models\User;
-use App\Models\Channel;
+use App\Models\Message;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -11,24 +12,20 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class UserWriting implements ShouldBroadcast
+class MessageDeleted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $user;
-    public $channel;
-    public $isWriting;
-    public $userTypingId;
+    public $message;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(User $user, Channel $channel, User $userWriting, bool $isWriting)
+    public function __construct(User $user, Message $message)
     {
         $this->user = $user;
-        $this->channel = $channel;
-        $this->isWriting = $isWriting;
-        $this->userTypingId = $userWriting->id;
+        $this->message = $message;
     }
 
     /**
@@ -39,7 +36,7 @@ class UserWriting implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('user-writing.' . $this->user->id),
+            new PrivateChannel('message-deleted.' . $this->user->id),
         ];
     }
 }

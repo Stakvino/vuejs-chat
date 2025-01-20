@@ -41,11 +41,13 @@ const formatMessageCount = computed(() => {
                         src="/images/chat/is-typing.gif" width="35" alt="user is typing"
                     >
                 </div>
-                <p v-else-if="channel.info.lastMessage && showInfo" class="text-sm truncate">
+                <p v-else-if="channel.info.lastMessage && showInfo" class="text-sm truncate" :class="{ italic: channel.info.lastMessage.is_file || channel.info.lastMessage.is_audio }">
                     <i v-if="channel.info.lastMessage.is_image" class="pi pi-image mr-1 text-sm"></i>
                     <i v-else-if="channel.info.lastMessage.is_file" class="pi pi-paperclip mr-1 text-sm"></i>
                     <i v-else-if="channel.info.lastMessage.is_audio" class="pi pi-play mr-1 text-sm"></i>
-                    {{ channel.info.lastMessage.text }}
+                    <span>
+                        {{ channel.info.lastMessage.text }}
+                    </span>
                 </p>
             </div>
         </div>

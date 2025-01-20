@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('audio_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Message::class);
+            $table->foreignIdFor(Message::class)->onDelete('cascade');
             $table->string('file_path');
             $table->float('duration');
             $table->timestamps();

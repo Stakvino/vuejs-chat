@@ -11,6 +11,7 @@ use App\Models\ChannelType;
 use App\Models\MessageType;
 use Illuminate\Http\Request;
 use App\Events\ChannelCreated;
+use App\Events\MessageDeleted;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Requests\UpdateMessageRequest;
@@ -122,7 +123,10 @@ class MessageController extends Controller
     {
         $members = $channel->members();
         foreach ($members as $member) {
-            UserWriting::dispatch($member, $channel, $request->get('is-writing') ?? false);
+            $userWriting = $request->has('chat-bot-writing')
+                ? User::find( User::CHAT_BOT_ID )
+                : auth()->user();
+            UserWriting::dispatch($member, $channel, $userWriting, $request->get('is-writing') ?? false);
         }
 
         return response()->json([
@@ -140,9 +144,24 @@ class MessageController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * @return Illuminate\Http\JsonResponse
      */
-    public function destroy(Message $message)
+    public function destroy(Message $message) : JsonResponse
     {
-        //
+
+        if ( $message->user->id !== auth()->user()->id ) {
+            return response()->json(['success' => false]);
+        }
+
+        $message->remove();
+
+        $members = $message->channel->members();
+        foreach ($members as $member) {
+            MessageDeleted::dispatch($member, $message);
+        }
+
+        return response()->json([
+            'success' => true
+        ]);
     }
 }

@@ -1,17 +1,20 @@
 <script setup>
-import { computed, onUpdated, ref, watchEffect } from 'vue';
+import { computed, onUpdated, ref, useTemplateRef, watchEffect } from 'vue';
 import ShowProfile from '@/views/modals/ShowProfile.vue';
 import { dateTimeFormat } from '@/utils/helpers';
 import { getLocalMoment } from '@/utils/helpers';
 import { useAuthStore } from '@/stores/useAuth';
 import { storeToRefs } from 'pinia';
-import { Button, Divider, Image } from 'primevue';
+import { Button, Divider, Image, Menu, useConfirm } from 'primevue';
 import AudioMessageReader from '../AudioMessageReader/AudioMessageReader.vue';
+import axios from 'axios';
 
 const props = defineProps([
     "message", "usersSeen", "isMyMessage", "sender", "mustShowSender", "onShowProfile",
     "dateDivider"
 ])
+
+const emits = defineEmits(['reload-messages']);
 
 const authStore = useAuthStore();
 const { authUser } = storeToRefs(authStore);
@@ -37,6 +40,48 @@ const computedSeenByMessage = computed(() => {
     }
     return seenByMessage.value;
 });
+
+const messageOptionsMenu = ref();
+
+const confirm = useConfirm();
+
+const deleteMessageConfirm = () => {
+    confirm.require({
+        message: 'Are you sure you want to delete this message ?',
+        header: 'Confirmation',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true,
+            class: 'action-button !rounded py-1 px-3 w-20'
+        },
+        acceptProps: {
+            label: 'Delete',
+            class: 'error-button rounded py-1 px-3 w-20'
+        },
+        accept: () => {
+            axios.delete(`/api/messages/${props.message.id}`)
+            .then(response => {
+                if (response.data.success) {
+                    emits('reload-messages');
+                }
+            })
+        }
+    });
+}
+
+const messageOptionsItems = ref
+([
+    { label: "Options" },
+    {
+        label: 'Delete message',
+        icon: 'pi pi-trash',
+        command: () => {
+            deleteMessageConfirm();
+        }
+    },
+]);
 
 </script>
 
@@ -64,7 +109,19 @@ const computedSeenByMessage = computed(() => {
                 >
                 </div>
             </div>
-            <div :class="isMyMessage ? 'my-message-container': 'others-message-container'">
+
+            <div v-if="message.is_deleted" class="relative" :class="isMyMessage ? 'my-message-container': 'others-message-container'">
+                <span class="italic font-bold">Deleted message</span>
+            </div>
+
+            <div v-else class="relative" :class="isMyMessage ? 'my-message-container': 'others-message-container'">
+                <div v-if="isMyMessage" class="absolute" style="right: 5px; top: 2px">
+                    <Button class="three-dots-btn" type="button" icon="pi pi-ellipsis-v text-white font-extrabold"
+                        @click="event => messageOptionsMenu.toggle(event)" size="small"
+                        aria-haspopup="true" aria-controls="message_options_menu"
+                    />
+                    <Menu ref="messageOptionsMenu" id="message_options_menu" :model="messageOptionsItems" :popup="true" />
+                </div>
                 <span v-if="message.info.is_image">
                     <div class="flex flex-col items-end justify-end">
                         <Image :src="message.info.file_path" alt="Image" width="80" height="60" preview />
@@ -180,7 +237,7 @@ const computedSeenByMessage = computed(() => {
 .my-message-container,
 .others-message-container {
     border-radius: 20px;
-    padding: 8px 15px;
+    padding: 10px 25px 8px 15px;
     border: rgba(200, 200, 200, .5) solid 1px;
     margin-bottom: 15px;
     display: inline;

@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('channel_user', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Channel::class);
-            $table->foreignIdFor(User::class);
+            $table->foreignIdFor(Channel::class)->onDelete('cascade');
+            $table->foreignIdFor(User::class)->onDelete('cascade');
             $table->timestamps();
         });
     }

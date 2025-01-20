@@ -29,6 +29,8 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    const CHAT_BOT_ID = 1;
+
     /**
      * The attributes that are mass assignable.
      *

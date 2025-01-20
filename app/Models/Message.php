@@ -9,6 +9,7 @@ use App\Models\MessageSeen;
 use App\Models\MessageType;
 use App\Models\AudioMessage;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -163,6 +164,23 @@ class Message extends Model
             'audio_path' => $this->isAudio() ? $this->audio->file_path : null,
             'audio_duration' => $this->isAudio() ? $this->audio->duration : null
         ];
+    }
+
+    /**
+     * Delete a message.
+     */
+    public function remove()
+    {
+        if ( $this->isFile() ) {
+            // Storage::disk('public')->delete($this->file->file_path);
+        }
+        if ( $this->isAudio() ) {
+            // Storage::disk('public')->delete($this->audio->file_path);
+        }
+
+        // return $this->delete();
+
+        $this->update(['is_deleted' => true]);
     }
 
 }

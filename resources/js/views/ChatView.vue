@@ -211,6 +211,17 @@ onMounted(async () => {
         usersTypingIds.value[data.channel.id] = channelUsersIds.slice(0, maxUsersToShow)
     })
 
+    // Listen to users seeing your messages
+    laravelEcho.private(`message-deleted.${authUser.value.id}`)
+    .listen('MessageDeleted', data => {
+        selectedChannel.value.messages = selectedChannel.value.messages.map(message => {
+            if ( message.id === data.message.id ) {
+                message.is_deleted = true;
+            }
+            return message;
+        });
+    })
+
     setContentIsReady(true);
 })
 
@@ -218,6 +229,17 @@ onMounted(async () => {
 const lastMessage = ref();
 const isScrolledToBottom = ref(false);
 const isChatShowReady = ref(true);
+
+const fetchMessages = channelId => {
+    return axios.get(`/api/channels/messages/${channelId}`)
+    .then(response => {
+        selectedChannel.value = response.data['channel'];
+        isScrolledToBottom.value = false;
+        selectedTab.value = "0";
+        isChatShowReady.value = true;
+    });
+}
+
 const goToChannel = async channelId => {
     isChatShowReady.value = false;
     if (selectedChannel.value && channelId === selectedChannel.value.id) {
@@ -225,13 +247,7 @@ const goToChannel = async channelId => {
         return;
     }
     // Get messages of selected channel
-    await axios.get(`/api/channels/messages/${channelId}`)
-    .then(response => {
-        selectedChannel.value = response.data['channel'];
-        isScrolledToBottom.value = false;
-        selectedTab.value = "0";
-        isChatShowReady.value = true;
-    });
+    await fetchMessages(channelId)
 
     // Update unseen messages count to zero when user enter channel chat
     axios.put(`/api/channels/seen/${selectedChannel.value.id}`, {
@@ -469,6 +485,7 @@ const isWritingAudio = useTemplateRef('is-writing-audio');
                             :messageSentEventUpdate="messageSentEventUpdate"
                             @chat-scrolled-down="isScrolledToBottom = true"
                             @reload-channels-list="loadUserChannels"
+                            @reload-messages="fetchMessages(selectedChannel.id)"
                             :goToChannel="goToChannel"
                             :deleteChannel="deleteChannel"
                             :usersTypingIds="usersTypingIds"

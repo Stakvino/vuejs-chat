@@ -19,7 +19,7 @@ const props = defineProps([
     'selectedChannel', 'isScrolledToBottom', 'messageSentEventUpdate','goToChannel',
     'deleteChannel', 'usersTypingIds'
 ]);
-const emit = defineEmits(['chat-scrolled-down', 'chat-scrolled-up', 'reload-channels-list'])
+const emit = defineEmits(['chat-scrolled-down', 'chat-scrolled-up', 'reload-channels-list', 'reload-messages'])
 
 const showChannelsList = defineModel('showChannelsList');
 const toast = useToast();
@@ -131,8 +131,30 @@ const onMessageSubmit = () => {
             props.messageSentEventUpdate(updatedChannel, newMessage);
             message.value = '';
             axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, {'is-writing': false})
+            if ( !props.selectedChannel.isPrivate ) {
+                axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, { 'is-writing': true })
+            }
         }
     });
+
+
+    const options = {
+        method: 'GET',
+        url: 'https://free-chatgpt-api.p.rapidapi.com/chat-completion-one',
+        params: {prompt: message.value},
+        headers: {
+            'x-rapidapi-key': '805591ab1emsh03af7c2124c45ccp1c251bjsn404479fc000b',
+            'x-rapidapi-host': 'free-chatgpt-api.p.rapidapi.com'
+        }
+    };
+
+    try {
+        axios.request(options)
+        .then(response => console.log(response.data.response));
+    } catch (error) {
+        console.error(error);
+    }
+
 }
 
 const dateDivider = (message, messages) => {
@@ -303,6 +325,7 @@ const onAudioRecordClick = () => {
                     :onShowProfile="onShowProfile"
                     :dateDivider="dateDivider(message, selectedChannel.messages)"
                     :class="`chat-message-${message.id}`"
+                    @reload-messages="emit('reload-messages')"
                 />
 
             </div>

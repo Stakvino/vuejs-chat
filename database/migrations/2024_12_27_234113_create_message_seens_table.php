@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('message_seens', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Message::class);
-            $table->foreignIdFor(User::class);
+            $table->foreignIdFor(Message::class)->onDelete('cascade');
+            $table->foreignIdFor(User::class)->onDelete('cascade');
             $table->boolean('is_seen')->default(false);
             $table->timestamps();
         });
