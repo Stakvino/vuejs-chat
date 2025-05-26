@@ -12,6 +12,8 @@ use App\Models\MessageSeen;
 use App\Models\MessageType;
 use App\Models\AudioMessage;
 use Laravel\Sanctum\HasApiTokens;
+use App\Mail\PublicMessageReceived;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Collection;
@@ -93,6 +95,30 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     public function seens(): HasMany
     {
         return $this->hasMany(MessageSeen::class);
+    }
+
+    /**
+     * Get the super admin user.
+     */
+    public static function getSuperAdmin(): User
+    {
+        return User::where("email", "ousdgun@gmail.com")->first();
+    }
+
+    /**
+     * check if user is super admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->email === "ousdgun@gmail.com";
+    }
+
+    /**
+     * check if user is a chatbot.
+     */
+    public function isChatBot(): bool
+    {
+        return $this->id === User::CHAT_BOT_ID;
     }
 
     /**
@@ -276,7 +302,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
             'text' => $message['text'],
             'channel_id' => $channel->id,
             'user_id' => $this->id,
-            'message_type_id' => $message['type']->id
+            'message_type_id' => MessageType::TEXT_ID
         ]);
 
         if ( isset($message['attachment']) ) {
@@ -288,6 +314,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
                 'file_path' => FileMessage::FOLDER_PATH . $fileName,
                 'is_image' => \str_starts_with($message['attachment']->getClientMimeType(), 'image'),
             ]);
+            $createdMessage->update(["message_type_id" => MessageType::FILE_ID]);
         }
         if ( isset($message['audio']) ) {
             $fileName = $createdMessage->id . "-" . now()->format('d_m_y_h_i_s');
@@ -297,6 +324,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
                 'file_path' => AudioMessage::FOLDER_PATH . $fileName,
                 'duration' => $message['audio-duration'],
             ]);
+            $createdMessage->update(["message_type_id" => MessageType::AUDIO_ID]);
         }
 
         $now = now();
@@ -311,6 +339,12 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
 
         MessageSeen::insert($messageSeens->toArray());
         $channel->update(['updated_at' => now()]);
+
+        // Send an email to myself to know that someone sent a message in the public channel
+        if ( $channel->isPublic() && !$this->isSuperAdmin() && !$this->isChatBot() ) {
+            Mail::to( User::getSuperAdmin() )
+            ->send( new PublicMessageReceived( $this, $createdMessage ) );
+        }
 
         return $createdMessage;
     }

@@ -14,6 +14,7 @@ import { getLocalMoment } from '../../utils/helpers';
 import WaveSurfer from 'wavesurfer.js';
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record.js';
 import moment from 'moment';
+import { GoogleGenAI } from "@google/genai";
 
 const props = defineProps([
     'selectedChannel', 'isScrolledToBottom', 'messageSentEventUpdate','goToChannel',
@@ -98,7 +99,7 @@ const onChatScroll = throttle(e => {
     }
 
     // Load more messages when user scroll up
-    if ( target.scrollTop < 20 && !isLoadingMessages.value) {
+    if ( maxScroll > 0 && target.scrollTop < 20 && !isLoadingMessages.value) {
         isLoadingMessages.value = true;
         const oldestMessage = props.selectedChannel.messages[0];
         oldChatHeight.value = chatMessagesContainer.value.firstChild.clientHeight;
@@ -121,9 +122,10 @@ const onChatScroll = throttle(e => {
 }, 30);
 
 const message = ref();
-const onMessageSubmit = () => {
+const onMessageSubmit = async () => {
     const channelId = props.selectedChannel.id;
-    axios.post('/api/messages', { 'text': message.value, 'channel_id': channelId })
+    const submitedMessage = message.value;
+    await axios.post('/api/messages', { 'text': submitedMessage, 'channel_id': channelId })
     .then(response => {
         if ( response.data['success'] ) {
             const updatedChannel = response.data.channel;
@@ -131,28 +133,33 @@ const onMessageSubmit = () => {
             props.messageSentEventUpdate(updatedChannel, newMessage);
             message.value = '';
             axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, {'is-writing': false})
-            if ( !props.selectedChannel.isPrivate ) {
-                axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, { 'is-writing': true })
-            }
         }
     });
 
+    // Chat bot response
+    if ( !props.selectedChannel.isPrivate ) {
 
-    const options = {
-        method: 'GET',
-        url: 'https://free-chatgpt-api.p.rapidapi.com/chat-completion-one',
-        params: {prompt: message.value},
-        headers: {
-            'x-rapidapi-key': '805591ab1emsh03af7c2124c45ccp1c251bjsn404479fc000b',
-            'x-rapidapi-host': 'free-chatgpt-api.p.rapidapi.com'
-        }
-    };
+        await axios.post(
+            `/api/messages/user-is-writing/${props.selectedChannel.id}`,
+            { 'is-writing': true, 'chat-bot': true }
+        )
 
-    try {
-        axios.request(options)
-        .then(response => console.log(response.data.response));
-    } catch (error) {
-        console.error(error);
+        axios.post('/api/messages/robot', { 'text': submitedMessage, 'channel_id': channelId })
+        .then(response => {
+            if ( response.data['success'] ) {
+                const updatedChannel = response.data.channel;
+                const newMessage = response.data.message;
+                props.messageSentEventUpdate(updatedChannel, newMessage);
+                axios.post(
+                    `/api/messages/user-is-writing/${props.selectedChannel.id}`,
+                    { 'is-writing': false, 'chat-bot': true }
+                )
+            }
+        })
+        .catch(err => {
+            // toast.add({ severity: 'error', summary: err.message, life: 3000 })
+        });
+
     }
 
 }
@@ -330,31 +337,33 @@ const onAudioRecordClick = () => {
 
             </div>
 
-            <div id="audioRecordButton" style="border: #a881af solid 3px"
-                :class="{hidden: !isRecordingAudio}"
-                class="mt-auto w-8/12 ml-auto bg-white rounded-3xl border">
-            </div>
-
-            <div class="flex justify-start items-end">
-                <div style="opacity: 0; width: 22px; height: 22px"></div>
-                <div v-for="userId in channelUsersTyping">
-                    <div v-if="selectedChannel.receivers.find(receiver => receiver.id === userId)"
-                            class="relative sender-avatar rounded-full bg-cover bg-center"
-                            style="border: #5dbea3 solid 1px; width: 22px; height: 22px"
-                            :style="
-                            {
-                                left: `${channelUsersTyping.indexOf(userId) * -8}px`,
-                                backgroundColor: selectedChannel.receivers.find(receiver => receiver.id === userId).personal_color,
-                                backgroundImage: `url(${selectedChannel.receivers.find(receiver => receiver.id === userId).avatar_path})`
-                            }"
-                        >
-                    </div>
+            <div class="mt-auto w-full">
+                <div id="audioRecordButton" style="border: #a881af solid 3px"
+                    :class="{hidden: !isRecordingAudio}"
+                    class="w-8/12 ml-auto bg-white rounded-3xl border">
                 </div>
-                <img :style="{ left: `${(channelUsersTyping.length) * -8}px` }"
-                    v-if="channelUsersTyping.length" class="relative"
-                    style="background-color: rgba(255,255,255,.5); border-radius: 6px; height: 15px"
-                    src="/images/chat/is-typing.gif" width="35" alt="user is typing"
-                >
+
+                <div class="flex justify-start items-end">
+                    <div style="opacity: 0; width: 22px; height: 22px"></div>
+                    <div v-for="userId in channelUsersTyping">
+                        <div v-if="selectedChannel.receivers.find(receiver => receiver.id === userId)"
+                                class="relative sender-avatar rounded-full bg-cover bg-center"
+                                style="border: #5dbea3 solid 1px; width: 22px; height: 22px"
+                                :style="
+                                {
+                                    left: `${channelUsersTyping.indexOf(userId) * -8}px`,
+                                    backgroundColor: selectedChannel.receivers.find(receiver => receiver.id === userId).personal_color,
+                                    backgroundImage: `url(${selectedChannel.receivers.find(receiver => receiver.id === userId).avatar_path})`
+                                }"
+                            >
+                        </div>
+                    </div>
+                    <img :style="{ left: `${(channelUsersTyping.length) * -8}px` }"
+                        v-if="channelUsersTyping.length" class="relative"
+                        style="background-color: rgba(255,255,255,.5); border-radius: 6px; height: 15px"
+                        src="/images/chat/is-typing.gif" width="35" alt="user is typing"
+                    >
+                </div>
             </div>
 
             <!-- <Button class="chat-scrolldown-button sticky" @click="onChatScrollButtonCLick" v-if="showChatScrollDownButton" severity="secondary" icon="pi pi-arrow-down" raised rounded /> -->

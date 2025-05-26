@@ -26,6 +26,8 @@
   },
   "homepage": "https://github.com/Stakvino/vuejs-chat#readme",
   "dependencies": {
+    "@google/genai": "^1.0.0",
+    "@google/generative-ai": "^0.24.1",
     "@primevue/forms": "^4.2.5",
     "@primevue/themes": "^4.0.0",
     "axios": "^1.7.9",

@@ -181,4 +181,12 @@ class Channel extends Model
         return $this->type()->first()->id === ChannelType::PRIVATE_ID;
     }
 
+    /**
+     * Check if the channel is public.
+     */
+    public function isPublic() : bool
+    {
+        return $this->type()->first()->id === ChannelType::PUBLIC_ID;
+    }
+
 }

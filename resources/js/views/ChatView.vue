@@ -93,7 +93,6 @@ const messageSentEventUpdate = (updatedChannel, newMessage) => {
     }
     updateChannel(updatedChannel);
     isScrolledToBottom.value = false;
-
 }
 
 const channelsFetchError = ref(false);
@@ -230,7 +229,7 @@ const lastMessage = ref();
 const isScrolledToBottom = ref(false);
 const isChatShowReady = ref(true);
 
-const fetchMessages = channelId => {
+const fetchMessages = async channelId => {
     return axios.get(`/api/channels/messages/${channelId}`)
     .then(response => {
         selectedChannel.value = response.data['channel'];

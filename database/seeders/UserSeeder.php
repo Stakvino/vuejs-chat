@@ -17,17 +17,18 @@ class UserSeeder extends Seeder
     public function run(): void
     {
 
+        User::create([
+            'id' => User::CHAT_BOT_ID,
+            'name' => 'Mr Robot',
+            'username' => 'mrrobot#0001',
+            'avatar' => 'robot.webp',
+            'personal_color' => '#5412AB',
+            'email' => 'mr@robot.com',
+            'email_verified_at' => '2024-12-26 18:27:00',
+            'password' => Hash::make('password')
+        ]);
+
         User::insert([
-            [
-                'id' => User::CHAT_BOT_ID,
-                'name' => 'Mr Robot',
-                'username' => 'mrrobot#0001',
-                'avatar' => 'robot.webp',
-                'personal_color' => '#5412AB',
-                'email' => 'mr@robot.com',
-                'email_verified_at' => '2024-12-26 18:27:00',
-                'password' => Hash::make('password')
-            ],
             [
                 'name' => 'Ouss Dgun',
                 'username' => 'oussdgun#0002',

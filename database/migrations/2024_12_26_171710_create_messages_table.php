@@ -16,7 +16,7 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->string('text');
+            $table->text('text');
             $table->foreignIdFor(Channel::class)->onDelete('cascade');
             $table->foreignIdFor(User::class)->onDelete('cascade');
             $table->foreignIdFor(MessageType::class)->onDelete('cascade');

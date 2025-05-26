@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use GeminiAPI\Client;
 use App\Models\Channel;
 use App\Models\Message;
 use App\Events\MessageSent;
@@ -13,6 +14,9 @@ use Illuminate\Http\Request;
 use App\Events\ChannelCreated;
 use App\Events\MessageDeleted;
 use Illuminate\Http\JsonResponse;
+use GeminiAPI\Resources\ModelName;
+use Illuminate\Support\Facades\Http;
+use GeminiAPI\Resources\Parts\TextPart;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Requests\UpdateMessageRequest;
 
@@ -82,13 +86,61 @@ class MessageController extends Controller
     }
 
     /**
-     * Store file that was sent as a message.
+     * Store message sent by chat bot.
      *
      *  @return Illuminate\Http\JsonResponse
      */
-    public function storeattachment(Request $request) : JsonResponse
+    public function robotMessage(Request $request) : JsonResponse
     {
 
+        $geminiApiKey = "AIzaSyD8TwWBgkQIv3aHEF4PI78ULSzG1wBfsBo";
+        $geminiResponse = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$geminiApiKey",
+        [
+            "contents" => [
+                (object) [
+                    "parts" =>
+                    [
+                        (object) [ "text" => $request->get('text') ]
+                    ]
+                ]
+            ]
+        ]);
+
+        if ( $geminiResponse->successful() ) {
+            $geminiResponseText = $geminiResponse->object()->candidates[0]->content->parts[0]->text;
+        }
+        else {
+            $geminiResponse->throw();
+        }
+
+
+        $chatBot = User::find(User::CHAT_BOT_ID);
+        $channel = Channel::find($request->get('channel_id'));
+        $message = [
+            'text' => $geminiResponseText,
+            'type' => MessageType::find(MessageType::TEXT_ID)
+        ];
+
+        $message = $chatBot->sendMessage($channel, $message);
+
+        if ( $message === null ) {
+            return response()->json( ['success' => false], 403);
+        }
+
+        $members = $channel->members();
+
+        foreach ($members as $member) {
+            MessageSent::dispatch($member, $channel, $message);
+        }
+
+        $channel->info = $channel->getInfo();
+        $message->info = $message->getInfo();
+
+        return response()->json([
+            'success' => true,
+            'channel' => $channel,
+            'message' => $message
+        ]);
     }
 
     /**
@@ -123,7 +175,7 @@ class MessageController extends Controller
     {
         $members = $channel->members();
         foreach ($members as $member) {
-            $userWriting = $request->has('chat-bot-writing')
+            $userWriting = $request->has('chat-bot')
                 ? User::find( User::CHAT_BOT_ID )
                 : auth()->user();
             UserWriting::dispatch($member, $channel, $userWriting, $request->get('is-writing') ?? false);
