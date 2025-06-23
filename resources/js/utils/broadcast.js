@@ -7,10 +7,11 @@ export const initChatBroadcasting = () => {
 
     const laravelEcho = new Echo({
         broadcaster: 'pusher',
-        key: import.meta.env.VITE_PUSHER_APP_KEY,
-        wsHost: import.meta.env.VITE_PUSHER_HOST,
-        wsPort: import.meta.env.VITE_PUSHER_PORT,
-        wssPort: import.meta.env.VITE_PUSHER_PORT,
+        key: import.meta.env.VITE_REVERB_APP_KEY,
+        wsHost: import.meta.env.VITE_REVERB_HOST,
+        wsPort: import.meta.env.VITE_REVERB_PORT,
+        wssPort: import.meta.env.VITE_REVERB_PORT,
+        // forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
         forceTLS: false,
         encrypted: true,
         disableStats: true,
