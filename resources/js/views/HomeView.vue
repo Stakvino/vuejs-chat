@@ -48,7 +48,7 @@
                     <div class="p-4 bg-surface-0 dark:bg-surface-900 h-full">
                         <div class="flex flex-col justify-start items-start">
                             <div class="rounded-md shadow-md bg-yellow-200 p-1">
-                                <img src="images/homepage/laravel.png" width="45" alt="laravel logo">
+                                <img src="/images/homepage/laravel.png" width="45" alt="laravel logo">
                             </div>
                             <div>
                                 <h4 class="text-lg font-bold my-1">Laravel</h4>
@@ -62,7 +62,7 @@
                     <div class="p-4 bg-surface-0 dark:bg-surface-900 h-full">
                         <div class="flex flex-col justify-start items-start">
                             <div class="rounded-md shadow-md bg-pink-200 p-1">
-                                <img src="images/homepage/vuejs.webp" width="45" alt="laravel logo">
+                                <img src="/images/homepage/vuejs.webp" width="45" alt="laravel logo">
                             </div>
                             <div>
                                 <h4 class="text-lg font-bold my-1">Vuejs</h4>
@@ -75,7 +75,7 @@
                     <div class="p-4 bg-surface-0 dark:bg-surface-900 h-full">
                         <div class="flex flex-col justify-start items-start">
                             <div class="rounded-md shadow-md bg-blue-200 p-1">
-                                <img src="images/homepage/primevue.png" width="45" alt="laravel logo">
+                                <img src="/images/homepage/primevue.png" width="45" alt="laravel logo">
                             </div>
                             <div>
                                 <h4 class="text-lg font-bold my-1">Primevue</h4>
