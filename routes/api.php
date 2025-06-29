@@ -14,52 +14,58 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     // return $request->user();
 });
 
-Route::get('/auth-check', function() {
-    return response()->json(['isAuth' => auth()->check()]);
-})->name('auth.check');
-Route::get('/auth-user', [UserController::class, 'getAuthUser'])
-->name('auth.user')->middleware('auth:sanctum');
+Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
 
-Route::post('/tokens/create', function (Request $request) {
-    $token = $request->user()->createToken($request->token_name);
-    return ['token' => $token->plainTextToken];
-});
+    Route::get('/auth-check', function() {
+        return response()->json(['isAuth' => auth()->check()]);
+    })->name('auth.check');
+    Route::get('/auth-user', [UserController::class, 'getAuthUser'])
+    ->name('auth.user')->middleware('auth:sanctum');
 
-Route::get('/get-csrf', function (Request $request) {
-    session()->regenerate();
-    return response()->json([ "token" => csrf_token() ], 200);
-});
-
-Route::prefix('users')->name('users.')
-->controller(UserController::class)->group(function () {
-    Route::get('/all', 'usersListing')->middleware(['auth:sanctum', 'verified'])->name('all');
-    Route::put('/message-event-received/{channel}/{message}', 'messageEventReceived')->name('message-event-received')->middleware(['auth:sanctum', 'verified']);
-    Route::post('/block/{user}', 'block')->name('block');
-    Route::delete('/unblock/{user}', 'unblock')->name('unblock');
-    Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/{user}', 'showProfile')->name('show')->middleware(['auth:sanctum', 'verified']);
-        Route::put('/update', 'updateProfile')->name('update')->middleware(['auth:sanctum', 'verified']);
+    Route::post('/tokens/create', function (Request $request) {
+        $token = $request->user()->createToken($request->token_name);
+        return ['token' => $token->plainTextToken];
     });
+
+    Route::get('/get-csrf', function (Request $request) {
+        session()->regenerate();
+        return response()->json([ "token" => csrf_token() ], 200);
+    });
+
+    Route::prefix('users')->name('users.')
+    ->controller(UserController::class)->group(function () {
+        Route::get('/all', 'usersListing')->middleware(['auth:sanctum', 'verified'])->name('all');
+        Route::put('/message-event-received/{channel}/{message}', 'messageEventReceived')->name('message-event-received')->middleware(['auth:sanctum', 'verified']);
+        Route::post('/block/{user}', 'block')->name('block');
+        Route::delete('/unblock/{user}', 'unblock')->name('unblock');
+        Route::prefix('profile')->name('profile.')->group(function () {
+            Route::get('/{user}', 'showProfile')->name('show')->middleware(['auth:sanctum', 'verified']);
+            Route::put('/update', 'updateProfile')->name('update')->middleware(['auth:sanctum', 'verified']);
+        });
+    });
+
+    Route::prefix('channels')->middleware(['auth:sanctum', 'verified'])->name('channels.')
+    ->controller(ChannelController::class)->group(function () {
+        Route::get('/public', 'getPublicChannels')->name('public');
+        Route::get('/', 'index')->name('index');
+        Route::get('/{channel}', 'show')->name('show');
+        Route::get('/messages/{channel}', 'getMessages')->name('get-messages');
+        Route::put('/seen/{channel}', 'updateSeen')->name('update-seen');
+        Route::get('getinfo/{channel}', 'getInfo')->name('get-info');
+        Route::post('/subscribe/{channel}', 'subscribe')->name('subscribe');
+        Route::delete('/unsubscribe/{channel}', 'unsubscribe')->name('unsubscribe');
+    });
+
+    Route::prefix('messages')->middleware(['auth:sanctum', 'verified'])->name('messages.')
+    ->controller(MessageController::class)->group(function () {
+        Route::post('/', 'store')->name('store');
+        Route::post('/robot', 'robotMessage')->name('robot-message');
+        Route::post('/user-is-writing/{channel}', 'userIsWriting')->name('user-is-writing');
+        Route::get('getinfo/{message}', 'getInfo')->name('get-info');
+        Route::get('get-messages', 'getMessages')->name('get-messages');
+        Route::delete('/{message}', 'destroy')->name('destroy');
+    });
+
 });
 
-Route::prefix('channels')->middleware(['auth:sanctum', 'verified'])->name('channels.')
-->controller(ChannelController::class)->group(function () {
-    Route::get('/public', 'getPublicChannels')->name('public');
-    Route::get('/', 'index')->name('index');
-    Route::get('/{channel}', 'show')->name('show');
-    Route::get('/messages/{channel}', 'getMessages')->name('get-messages');
-    Route::put('/seen/{channel}', 'updateSeen')->name('update-seen');
-    Route::get('getinfo/{channel}', 'getInfo')->name('get-info');
-    Route::post('/subscribe/{channel}', 'subscribe')->name('subscribe');
-    Route::delete('/unsubscribe/{channel}', 'unsubscribe')->name('unsubscribe');
-});
 
-Route::prefix('messages')->middleware(['auth:sanctum', 'verified'])->name('messages.')
-->controller(MessageController::class)->group(function () {
-    Route::post('/', 'store')->name('store');
-    Route::post('/robot', 'robotMessage')->name('robot-message');
-    Route::post('/user-is-writing/{channel}', 'userIsWriting')->name('user-is-writing');
-    Route::get('getinfo/{message}', 'getInfo')->name('get-info');
-    Route::get('get-messages', 'getMessages')->name('get-messages');
-    Route::delete('/{message}', 'destroy')->name('destroy');
-});

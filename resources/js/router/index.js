@@ -15,8 +15,9 @@ import axios from 'axios';
 import NotFoundView from '@/views/NotFoundView.vue';
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
+    // history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHistory(),
+    routes: [
     {
         path: '/',
         name: 'home',
