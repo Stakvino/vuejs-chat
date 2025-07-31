@@ -22,7 +22,9 @@ export function debounce(func, timeout = 300){
 }
 
 export function primeVueFormStatesToData(states) {
-    const data = {};
+    const data = {
+        "_token": document.querySelector("meta[name=csrf-token]").content
+    };
     for (const [name, state] of Object.entries(states)) {
         data[name] = state.value;
     }

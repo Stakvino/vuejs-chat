@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Route;
     })
     ->where(['all' => '^(?!api|verify-email).*$']);
 
+    Route::get('/api/test/email', function () {
+
+    });
+
 // });
 
 

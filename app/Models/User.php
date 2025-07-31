@@ -32,7 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
     use HasApiTokens, HasFactory, Notifiable;
 
     const CHAT_BOT_ID = 1;
-
+    const SUPER_ADMIN_EMAIL = "admin@oussama-cheriguene.com";
     /**
      * The attributes that are mass assignable.
      *
@@ -102,7 +102,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
      */
     public static function getSuperAdmin(): User
     {
-        return User::where("email", "ousdgun@gmail.com")->first();
+        return User::where("email", User::SUPER_ADMIN_EMAIL)->first();
     }
 
     /**
@@ -110,7 +110,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
      */
     public function isSuperAdmin(): bool
     {
-        return $this->email === "ousdgun@gmail.com";
+        return $this->email === User::SUPER_ADMIN_EMAIL;
     }
 
     /**

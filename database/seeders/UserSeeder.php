@@ -30,8 +30,17 @@ class UserSeeder extends Seeder
 
         User::insert([
             [
+                'name' => 'Super Admin',
+                'username' => 'superadmin#0002',
+                'avatar' => '',
+                'personal_color' => '#5412AB',
+                'email' => User::SUPER_ADMIN_EMAIL,
+                'email_verified_at' => '2024-12-26 18:27:00',
+                'password' => Hash::make('password')
+            ],
+            [
                 'name' => 'Ouss Dgun',
-                'username' => 'oussdgun#0002',
+                'username' => 'oussdgun#0003',
                 'avatar' => '',
                 'personal_color' => '#5412AB',
                 'email' => 'ousdgun@gmail.com',
@@ -40,7 +49,7 @@ class UserSeeder extends Seeder
             ],
             [
                 'name' => 'Hadi Sir',
-                'username' => 'hadisir#0003',
+                'username' => 'hadisir#0004',
                 'avatar' => '',
                 'personal_color' => '#3190AA',
                 'email' => 'hadisir@gmail.com',
