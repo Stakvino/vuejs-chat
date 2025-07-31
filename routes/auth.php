@@ -8,7 +8,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
+// Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
 
     Route::post('/register', [RegisteredUserController::class, 'store'])
     ->middleware('guest')
@@ -42,4 +42,4 @@ Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
         ->middleware('auth')
         ->name('logout');
 
-});
+// });

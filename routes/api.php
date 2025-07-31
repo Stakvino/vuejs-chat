@@ -14,7 +14,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     // return $request->user();
 });
 
-Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
+// Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
 
     Route::get('/auth-check', function() {
         return response()->json(['isAuth' => auth()->check()]);
@@ -66,6 +66,6 @@ Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
         Route::delete('/{message}', 'destroy')->name('destroy');
     });
 
-});
+// });
 
 
