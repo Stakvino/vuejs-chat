@@ -21,7 +21,8 @@
     const initialValues = ref({
         email: '',
         password: '',
-        remember: false
+        remember: false,
+        "_token": document.querySelector("meta[name=csrf-token]").content
     });
 
     const resolver = ref(zodResolver(
@@ -111,6 +112,7 @@
                             <div class="flex justify-end mt-5">
                                 <Button type="submit" raised class="action-button !py-1 !px-3 sm:!py-2 sm:!px-5 !rounded-md">Login</Button>
                             </div>
+                            <InputText name="_token" type="hidden" />
                         </Form>
                     </div>
                 </template>
