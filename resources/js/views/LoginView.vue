@@ -10,10 +10,10 @@
     import axios from 'axios';
     import router from '@/router';
 
-    axios.defaults.headers.common = {
+    /*axios.defaults.headers.common = {
         'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN' : document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    };
+    };*/
     axios.defaults.withCredentials = true;
 
     const { setContentIsReady } = useAppStore();
