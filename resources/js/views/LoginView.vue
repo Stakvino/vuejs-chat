@@ -36,7 +36,15 @@
     const serverErrors = ref({});
     const onFormSubmit = ({ valid, states }) => {
         if (valid) {
-            axios.post('/login', primeVueFormStatesToData(states))
+            axios.post(
+                '/login',
+                primeVueFormStatesToData(states),
+                {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector("meta[name=csrf-token]").getAttribute('content')
+                    }
+                }
+            )
             .then(response => {
                 const responseData = response['data'];
                 if ( responseData['success'] && responseData['redirect'] ) {
