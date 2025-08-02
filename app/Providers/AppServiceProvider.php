@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\URL;
+use App\Models\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
     }
 }
