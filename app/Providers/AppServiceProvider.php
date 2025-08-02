@@ -6,6 +6,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
                 ->view('mails.verification', ['url' => $url])
                 ->subject('Verify Email Address');
         });
+
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
 
     }
 }
