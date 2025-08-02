@@ -31,7 +31,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        auth()->user()->update(['last_login_at' => now(), 'is_logged_in' => true]);
+        if ( auth()->check() ) {
+            auth()->user()->update(['last_login_at' => now(), 'is_logged_in' => true]);
+        }
 
         return response()->json([
             'success' => true,
