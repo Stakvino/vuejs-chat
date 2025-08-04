@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
         else {
             return response()->json([
                 'success' => false,
-                'error_message' => 'user not auth'
+                'error_message' => 'user not auth '.$request->authenticate()
             ]);
         }
 
