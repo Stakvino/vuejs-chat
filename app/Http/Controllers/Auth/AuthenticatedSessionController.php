@@ -34,6 +34,12 @@ class AuthenticatedSessionController extends Controller
         if ( auth()->check() ) {
             auth()->user()->update(['last_login_at' => now(), 'is_logged_in' => true]);
         }
+        else {
+            return response()->json([
+                'success' => false,
+                'error_message' => 'user not auth'
+            ]);
+        }
 
         return response()->json([
             'success' => true,

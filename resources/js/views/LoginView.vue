@@ -13,7 +13,6 @@
     axios.defaults.headers.common = {
         'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN' : document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        "X-XSRF-TOKEN":document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
     };
     axios.defaults.withCredentials = true;
     axios.defaults.withXSRFToken = true;
@@ -69,6 +68,7 @@
                 }
                 else {
                     toast.add({ severity: 'error', summary: 'Response error from server.', life: 3000 });
+                    console.log(responseData["error_message"]);
                 }
             })
             .catch(e => console.log('catch error response', e))
