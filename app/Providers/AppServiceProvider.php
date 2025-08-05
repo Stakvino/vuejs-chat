@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+        // Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
     }
 }
