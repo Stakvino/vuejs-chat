@@ -37,13 +37,14 @@ class AuthenticatedSessionController extends Controller
         else {
             return response()->json([
                 'success' => false,
-                'error_message' => 'user not auth '.$request->authenticate()
+                'error_message' => 'user is not auth '.$request->authenticate()
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'redirect' => '/chat'
+            'redirect' => '/chat',
+            // 'message' => $request->authenticate()
         ]);
     }
 

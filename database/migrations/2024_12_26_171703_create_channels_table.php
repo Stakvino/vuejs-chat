@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('channels', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(ChannelType::class)->onDelete('cascade');
-            $table->text('name')->default(Channel::DEFAULT_CHANNEL_NAME);
-            $table->text('icon')->default(Channel::DEFAULT_CHANNEL_ICON);
+            $table->string('name')->default(Channel::DEFAULT_CHANNEL_NAME);
+            $table->string('icon')->default(Channel::DEFAULT_CHANNEL_ICON);
             $table->timestamps();
         });
     }
