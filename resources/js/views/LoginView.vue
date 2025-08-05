@@ -45,12 +45,7 @@
         if (valid) {
             axios.post(
                 '/login',
-                primeVueFormStatesToData(states),
-                {
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector("meta[name=csrf-token]").getAttribute('content')
-                    }
-                }
+                primeVueFormStatesToData(states)
             )
             .then(response => {
                 console.log("response returned", response);
