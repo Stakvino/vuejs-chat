@@ -16,6 +16,20 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 // Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
 
+    Route::get('/test', function() {
+        return response()->json([
+            'success' => true,
+            'user' => null
+        ]);
+    })->name('test.get');
+
+    Route::post('/test', function(Request $request) {
+        return response()->json([
+            'success' => true,
+            'user' => $request->name
+        ]);
+    })->name('test.post');
+
     Route::get('/auth-check', function() {
         return response()->json(['isAuth' => auth()->check()]);
     })->name('auth.check');

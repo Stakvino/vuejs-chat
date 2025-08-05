@@ -42,6 +42,14 @@
 
     const serverErrors = ref({});
     const onFormSubmit = ({ valid, states }) => {
+        axios.get(`/api/test`)
+        .then(response => {
+            console.log("get request test", response);
+        })
+        axios.post(`/api/test`, {name: "ouss"})
+        .then(response => {
+            console.log("post request test", response);
+        })
         if (valid) {
             axios.post(
                 '/login',
