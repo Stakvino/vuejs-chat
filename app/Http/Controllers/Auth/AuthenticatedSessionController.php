@@ -16,9 +16,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): JsonResponse
     {
-        $requestAuthenticate = null;
         try {
-            $requestAuthenticate = $request->authenticate();
+            $request->authenticate();
         } catch (\Throwable $th) {
             if ( isset($th->status) ) {
                 return response()->json([
