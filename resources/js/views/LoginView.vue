@@ -45,7 +45,12 @@
         if (valid) {
             axios.post(
                 '/login',
-                primeVueFormStatesToData(states)
+                primeVueFormStatesToData(states),
+                {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }
             )
             .then(response => {
                 console.log("response returned", response);
