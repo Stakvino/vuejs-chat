@@ -43,36 +43,37 @@
     const serverErrors = ref({});
     const onFormSubmit = ({ valid, states }) => {
         if (valid) {
-            axios.post(
-                '/login',
-                primeVueFormStatesToData(states),
-                {
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                }
-            )
-            .then(response => {
-                console.log("response returned", response);
-                const responseData = response['data'];
-                if ( responseData['success'] && responseData['redirect'] ) {
-                    toast.add({ severity: 'success', summary: 'Login in...', life: 3000 });
-                    router.push({ path: responseData['redirect'] });
-                }
-                else if ( responseData['validation_error'] && responseData['error_messages'] ) {
-                    for (const fieldName in responseData['error_messages']) {
-                        if (Object.prototype.hasOwnProperty.call(responseData['error_messages'], fieldName)) {
-                            const errorMessage = responseData['error_messages'][fieldName];
-                            serverErrors.value[fieldName] = errorMessage;
+            axios.get('/sanctum/csrf-cookie').then(response => {
+                axios.post('/login', primeVueFormStatesToData(states),
+                    {
+                        headers: {
+                            'Accept': 'application/json'
                         }
                     }
-                }
-                else {
-                    toast.add({ severity: 'error', summary: 'Response error from server.', life: 3000 });
-                    console.log(responseData["error_message"]);
-                }
-            })
-            .catch(e => console.log('catch error response', e))
+                )
+                .then(response => {
+                    console.log("response returned", response);
+                    const responseData = response['data'];
+                    if ( responseData['success'] && responseData['redirect'] ) {
+                        toast.add({ severity: 'success', summary: 'Login in...', life: 3000 });
+                        router.push({ path: responseData['redirect'] });
+                    }
+                    else if ( responseData['validation_error'] && responseData['error_messages'] ) {
+                        for (const fieldName in responseData['error_messages']) {
+                            if (Object.prototype.hasOwnProperty.call(responseData['error_messages'], fieldName)) {
+                                const errorMessage = responseData['error_messages'][fieldName];
+                                serverErrors.value[fieldName] = errorMessage;
+                            }
+                        }
+                    }
+                    else {
+                        toast.add({ severity: 'error', summary: 'Response error from server.', life: 3000 });
+                        console.log(responseData["error_message"]);
+                    }
+                })
+                .catch(e => console.log('catch error response', e))
+            });
+
         }
     };
 </script>
