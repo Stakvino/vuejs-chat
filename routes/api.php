@@ -16,19 +16,16 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 // Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
 
-    Route::get('/test', function() {
+    Route::get('/clear', function() {
+        Artisan::call('cache:clear');
+        Artisan::call('config:clear');
+        Artisan::call('config:cache');
+        Artisan::call('view:clear');
         return response()->json([
             'success' => true,
-            'user' => null
+            "message" => "artisan commad executed"
         ]);
-    })->name('test.get');
-
-    Route::post('/test', function(Request $request) {
-        return response()->json([
-            'success' => true,
-            'user' => $request->name
-        ]);
-    })->name('test.post');
+    });
 
     Route::get('/auth-check', function() {
         return response()->json(['isAuth' => auth()->check()]);
