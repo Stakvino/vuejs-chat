@@ -40,7 +40,7 @@ class AuthenticatedSessionController extends Controller
                 'error_message' => 'user is not auth '
             ]);
         }
-
+        dd( auth()->check() );
         return response()->json([
             'success' => true,
             'redirect' => '/chat',
