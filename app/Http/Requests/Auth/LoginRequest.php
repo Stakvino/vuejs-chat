@@ -43,7 +43,7 @@ class LoginRequest extends FormRequest
     public function authenticate(): JsonResponse
     {
         $this->ensureIsNotRateLimited();
-
+        dd(Auth::attempt($this->only('email', 'password'), $this->boolean('remember')), RateLimiter::hit($this->throttleKey()), RateLimiter::clear($this->throttleKey()));
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
