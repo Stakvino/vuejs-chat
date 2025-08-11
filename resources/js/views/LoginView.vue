@@ -52,7 +52,6 @@
                     }
                 )
                 .then(response => {
-                    console.log("response returned", response);
                     const responseData = response['data'];
                     if ( responseData['success'] && responseData['redirect'] ) {
                         toast.add({ severity: 'success', summary: 'Login in...', life: 3000 });
