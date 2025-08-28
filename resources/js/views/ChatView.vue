@@ -115,7 +115,7 @@ const loadUserChannels = async () => {
 const usersTypingIds = ref({});
 onMounted(async () => {
     await loadUserChannels();
-    console.log(1);
+    console.log( import.meta.env.VITE_REVERB_SCHEME, (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https' );
 
     const laravelEcho = initChatBroadcasting();
     console.log(laravelEcho);
