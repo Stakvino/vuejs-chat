@@ -34,6 +34,7 @@ export const initChatBroadcasting = () => {
             };
         },
     });
+    console.log(laravelEcho, window.Pusher);
 
     return laravelEcho;
 }
