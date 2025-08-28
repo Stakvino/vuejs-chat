@@ -115,8 +115,11 @@ const loadUserChannels = async () => {
 const usersTypingIds = ref({});
 onMounted(async () => {
     await loadUserChannels();
+    console.log(1);
 
     const laravelEcho = initChatBroadcasting();
+    console.log(laravelEcho);
+
     // Listen to users sending messages
     laravelEcho.private(`chat-channel.${authUser.value.id}`)
     .listen('MessageSent', async data => {
