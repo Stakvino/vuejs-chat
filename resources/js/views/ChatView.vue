@@ -117,7 +117,6 @@ onMounted(async () => {
     await loadUserChannels();
 
     const laravelEcho = initChatBroadcasting();
-    console.log(laravelEcho);
 
     // Listen to users sending messages
     laravelEcho.private(`chat-channel.${authUser.value.id}`)
