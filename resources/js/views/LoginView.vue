@@ -43,11 +43,10 @@
     const serverErrors = ref({});
     const onFormSubmit = ({ valid, states }) => {
         if (valid) {
-            console.log("test");
+            console.log("test2");
 
-            axios.get('/sanctum/csrf-cookie').then(response => {
-                axios.post('/login', primeVueFormStatesToData(states)
-                )
+            // axios.get('/sanctum/csrf-cookie').then(response => {
+                axios.post('/login', primeVueFormStatesToData(states))
                 .then(response => {
                     const responseData = response['data'];
                     if ( responseData['success'] && responseData['redirect'] ) {
@@ -68,7 +67,7 @@
                     }
                 })
                 .catch(e => console.log('catch error response', e))
-            });
+            //});
 
         }
     };
