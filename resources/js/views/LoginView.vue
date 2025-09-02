@@ -44,12 +44,7 @@
     const onFormSubmit = ({ valid, states }) => {
         if (valid) {
             axios.get('/sanctum/csrf-cookie').then(response => {
-                axios.post('/login', primeVueFormStatesToData(states),
-                    {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    }
+                axios.post('/login', primeVueFormStatesToData(states)
                 )
                 .then(response => {
                     const responseData = response['data'];

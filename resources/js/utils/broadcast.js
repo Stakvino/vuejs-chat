@@ -4,7 +4,6 @@ import axios from 'axios';
 
 export const initChatBroadcasting = () => {
     window.Pusher = Pusher;
-    console.log(import.meta.env)
     const laravelEcho = new Echo({
         broadcaster: 'pusher',
         key: import.meta.env.VITE_REVERB_APP_KEY,
