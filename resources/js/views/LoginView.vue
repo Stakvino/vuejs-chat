@@ -43,6 +43,8 @@
     const serverErrors = ref({});
     const onFormSubmit = ({ valid, states }) => {
         if (valid) {
+            console.log("test");
+
             axios.get('/sanctum/csrf-cookie').then(response => {
                 axios.post('/login', primeVueFormStatesToData(states)
                 )
