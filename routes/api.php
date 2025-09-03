@@ -16,6 +16,15 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 // Route::group(['domain' => 'vuejschat.oussama-cheriguene.com'], function () {
 
+    Route::get('/test', function() {
+        return dd(
+            env('REVERB_HOST'),
+                    env('REVERB_PORT', 443),
+                    env('REVERB_SCHEME', 'https'),
+                    env('REVERB_SCHEME', 'https') === 'https',
+        );
+    });
+
     Route::get('/clear', function() {
         Artisan::call('cache:clear');
         Artisan::call('config:clear');
