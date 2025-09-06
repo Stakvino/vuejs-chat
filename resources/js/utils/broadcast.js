@@ -14,7 +14,7 @@ export const initChatBroadcasting = () => {
         // forceTLS: false,
         encrypted: true,
         disableStats: true,
-        enabledTransports: ['wss'],
+        enabledTransports: ['ws', 'wss'],
         cluster:import.meta.env.VITE_PUSHER_APP_CLUSTER,
         authorizer: (channel, options) => {
             return {
