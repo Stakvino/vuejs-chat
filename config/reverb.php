@@ -35,8 +35,8 @@ return [
             'hostname' => env('REVERB_HOST'),
             'options' => [
                 'tls' => [
-                    'local_cert' => '/etc/nginx/ssl/fullchain.pem',
-                    'local_pk' => '/etc/nginx/ssl/privkey.pem',
+                    // 'local_cert' => '/etc/nginx/ssl/fullchain.pem',
+                    // 'local_pk' => '/etc/nginx/ssl/privkey.pem',
                 ],
             ],
             'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_000),
