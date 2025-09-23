@@ -307,7 +307,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
 
         if ( isset($message['attachment']) ) {
             $fileName = $createdMessage->id . "-" . now()->format('d_m_y_h_i_s');
-            $message['attachment']->storeAs('/chat-files/attachments', $fileName, 'public' );
+            $message['attachment']->storeAs(FileMessage::FOLDER_PATH, $fileName, 'public' );
             FileMessage::create([
                 'message_id' => $createdMessage->id,
                 'original_file_name' => $message['attachment']->getClientOriginalName(),
@@ -318,7 +318,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
         }
         if ( isset($message['audio']) ) {
             $fileName = $createdMessage->id . "-" . now()->format('d_m_y_h_i_s');
-            $message['audio']->storeAs('/chat-files/audio-messages', $fileName, 'public' );
+            $message['audio']->storeAs(AudioMessage::FOLDER_PATH, $fileName, 'public' );
             AudioMessage::create([
                 'message_id' => $createdMessage->id,
                 'file_path' => AudioMessage::FOLDER_PATH . $fileName,
