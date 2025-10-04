@@ -105,6 +105,10 @@ const loadUserChannels = async () => {
     .then(response => {
         channelsFetchError.value = false;
         channels.value = response.data['channels'];
+        // if the channel was removed or user was blocked change selected channel value
+        if ( selectedChannel.value && !channels.value.private.map(c => c.id).some(id => id === selectedChannel.value.id) ) {
+            selectedChannel.value = null
+        }
     })
     .catch(e => {
         channelsFetchError.value = true;

@@ -21,6 +21,8 @@ class Message extends Model
     /** @use HasFactory<\Database\Factories\MessageFactory> */
     use HasFactory;
 
+    const USER_BLOCKED = "USER_BLOCKED";
+
     /**
      * The attributes that aren't mass assignable.
      *

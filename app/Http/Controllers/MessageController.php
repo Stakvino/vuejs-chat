@@ -66,8 +66,9 @@ class MessageController extends Controller
 
         $message = $sender->sendMessage($channel, $message);
 
-        if ( $message === null ) {
-            return response()->json( ['success' => false], 403);
+        // user blocked
+        if ( $message === Message::USER_BLOCKED ) {
+            return response()->json( ['success' => false, 'blocked_user' => true], 403);
         }
 
         $members = $channel->members();
@@ -123,8 +124,8 @@ class MessageController extends Controller
 
         $message = $chatBot->sendMessage($channel, $message);
 
-        if ( $message === null ) {
-            return response()->json( ['success' => false], 403);
+        if ( $message === Message::USER_BLOCKED ) {
+            return response()->json( ['success' => false, 'blocked_user' => true], 403);
         }
 
         $members = $channel->members();

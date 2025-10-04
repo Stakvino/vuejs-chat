@@ -19,13 +19,11 @@ export const initChatBroadcasting = () => {
         authorizer: (channel, options) => {
             return {
                 authorize: (socketId, callback) => {
-                    console.log(socketId, callback);
                     axios.post('/api/broadcasting/auth', {
                         socket_id: socketId,
                         channel_name: channel.name
                     })
                     .then(response => {
-                        console.log(response);
                         callback(false, response.data);
                     })
                     .catch(error => {

@@ -31,7 +31,7 @@
                     </RouterLink>
                 </div>
                 <div class="flex justify-end">
-                    <img src="/images/home-hero.png" alt="home hero section image">
+                    <img src="/images/home-hero.png" alt="home hero section image" width="600">
                 </div>
             </div>
         </div>

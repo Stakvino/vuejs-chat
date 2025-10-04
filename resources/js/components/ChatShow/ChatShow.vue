@@ -134,6 +134,9 @@ const onMessageSubmit = async () => {
             message.value = '';
             axios.post(`/api/messages/user-is-writing/${props.selectedChannel.id}`, {'is-writing': false})
         }
+        else if( response.data["blocked_user"] ) {
+            toast.add({ severity: 'error', summary: 'This user blocked you.', life: 3000 })
+        }
     });
 
     // Chat bot response

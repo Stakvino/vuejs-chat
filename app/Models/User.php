@@ -293,8 +293,8 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPasswordC
         // Trying to send a message to a blocked user
         if ( $channel->isPrivate() ) {
             $receiver = $channel->receivers()->first();
-            if ( auth()->user()->hasBlocked($receiver) ) {
-                return null;
+            if ( auth()->user()->hasBlocked($receiver) || $receiver->hasBlocked(auth()->user()) ) {
+                return Message::USER_BLOCKED;
             }
         }
 
